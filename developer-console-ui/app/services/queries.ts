@@ -205,4 +205,48 @@ export const HARDWARE_MODULE = gql`
     getHardwareModule
   }
 `
+
+export const GET_SIMULATION_RESULTS = gql`
+  query GET_SIMULATION_RESULTS($simulationId: ID!) {
+    getSimulationResults(simulationId: $simulationId) {
+      id
+      simulationId
+      status
+      summary
+      detailedResults
+      artifactPath
+      createdAt
+      completedAt
+    }
+  }
+`
+
+export const GET_SIMULATION_LOGS = gql`
+  query GET_SIMULATION_LOGS($simulationId: ID!) {
+    getSimulationLogs(simulationId: $simulationId) {
+      id
+      simulationId
+      logLevel
+      component
+      message
+      timestamp
+      additionalData
+    }
+  }
+`
+
+export const GET_SIMULATION_METRICS = gql`
+  query GET_SIMULATION_METRICS($simulationId: ID!) {
+    getSimulationMetrics(simulationId: $simulationId) {
+      id
+      simulationId
+      metricName
+      metricValue
+      unit
+      category
+      timestamp
+    }
+  }
+`
+
 // simulation end

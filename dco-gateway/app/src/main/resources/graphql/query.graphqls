@@ -8,6 +8,16 @@ type Query {
   simulationReadByQuery(query: String, search: String, page: Int, size: Int, sort: [String]): SimulationPage
   getHardwareModule: [String]
   getVehicleByVin(vin: String): VehicleResponse
+  
+  # Simulation Results Queries
+  getSimulationResults(simulationId: ID!): [SimulationResult]
+  getSimulationResultsByType(simulationId: ID!, resultType: ResultTypeEnum!): [SimulationResult]
+  getSimulationLogs(simulationId: ID!, page: Int, size: Int): SimulationLogPage
+  getSimulationLogsByLevel(simulationId: ID!, logLevel: LogLevelEnum!): [SimulationLog]
+  getSimulationErrorLogs(simulationId: ID!): [SimulationLog]
+  getSimulationMetrics(simulationId: ID!): [SimulationMetric]
+  getSimulationMetricsByCategory(simulationId: ID!, category: MetricCategoryEnum!): [SimulationMetric]
+  getSimulationSummary(simulationId: ID!): String
 }
 
 type ScenarioPage {
@@ -135,4 +145,8 @@ type Simulation {
   description: String
   createdBy: String
   startDate: String
+  endDate: String
+  executionDuration: Int
+  resultSummary: String
+  errorMessage: String
 }

@@ -27,6 +27,9 @@ import com.tsystems.dco.scenario.model.Scenario;
 import com.tsystems.dco.scenario.model.ScenarioPage;
 import com.tsystems.dco.scenario.model.SimulationInput;
 import com.tsystems.dco.scenario.model.SimulationPage;
+import com.tsystems.dco.scenario.model.SimulationResult;
+import com.tsystems.dco.scenario.model.SimulationLog;
+import com.tsystems.dco.scenario.model.SimulationMetric;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -74,4 +77,13 @@ public interface ScenarioFeignClient {
                                                        @RequestParam(value = "page") Integer page,
                                                        @RequestParam(value = "size") Integer size,
                                                        @RequestParam(value = "sort") List<String> sort);
+
+  @GetMapping(value = "/api/simulation/results/{simulationId}", produces = {"application/json"})
+  ResponseEntity<SimulationResult> getSimulationResults(@PathVariable(value = "simulationId") UUID simulationId);
+
+  @GetMapping(value = "/api/simulation/logs/{simulationId}", produces = {"application/json"})
+  ResponseEntity<List<SimulationLog>> getSimulationLogs(@PathVariable(value = "simulationId") UUID simulationId);
+
+  @GetMapping(value = "/api/simulation/metrics/{simulationId}", produces = {"application/json"})
+  ResponseEntity<List<SimulationMetric>> getSimulationMetrics(@PathVariable(value = "simulationId") UUID simulationId);
 }

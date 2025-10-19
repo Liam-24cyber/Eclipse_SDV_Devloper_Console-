@@ -6,6 +6,7 @@ import { GET_SIMULATIONS } from "./queries";
 export const simRowData = (rawData: RawDataSimType) =>
   rawData?.data?.simulationReadByQuery?.content?.map((item: any) => {
     return {
+      id: item.id,
       name: item.name,
       status: item.status,
       numberVehicles: item.noOfVehicle,
@@ -20,6 +21,109 @@ export const simRowData = (rawData: RawDataSimType) =>
     }
   })
 export const getSimData = async (pageNo: number) => {
+  // Mock simulation data
+  const mockSimulationData = {
+    data: {
+      simulationReadByQuery: {
+        content: [
+          {
+            id: 'sim-001',
+            name: 'Highway Speed Test',
+            status: 'completed',
+            noOfVehicle: 5,
+            brands: 'BMW, Audi',
+            scenarioType: 'Performance',
+            noOfScenarios: 3,
+            platform: 'CARLA',
+            environment: 'Highway',
+            startDate: '2025-10-15T10:30:00Z'
+          },
+          {
+            id: 'sim-002',
+            name: 'Emergency Braking Test',
+            status: 'completed',
+            noOfVehicle: 3,
+            brands: 'Mercedes, Tesla',
+            scenarioType: 'Safety',
+            noOfScenarios: 5,
+            platform: 'SUMO',
+            environment: 'Urban',
+            startDate: '2025-10-14T14:20:00Z'
+          },
+          {
+            id: 'sim-003',
+            name: 'Weather Adaptation Test',
+            status: 'running',
+            noOfVehicle: 8,
+            brands: 'Toyota, Honda',
+            scenarioType: 'Environmental',
+            noOfScenarios: 7,
+            platform: 'AirSim',
+            environment: 'Mixed',
+            startDate: '2025-10-19T09:00:00Z'
+          },
+          {
+            id: 'sim-004',
+            name: 'Traffic Jam Simulation',
+            status: 'completed',
+            noOfVehicle: 25,
+            brands: 'Ford, Chevrolet',
+            scenarioType: 'Traffic',
+            noOfScenarios: 4,
+            platform: 'CARLA',
+            environment: 'Urban',
+            startDate: '2025-10-18T16:30:00Z'
+          },
+          {
+            id: 'sim-005',
+            name: 'Autonomous Parking Test',
+            status: 'failed',
+            noOfVehicle: 2,
+            brands: 'Volvo, BMW',
+            scenarioType: 'Autonomous',
+            noOfScenarios: 6,
+            platform: 'SUMO',
+            environment: 'Parking Lot',
+            startDate: '2025-10-17T11:45:00Z'
+          },
+          {
+            id: 'sim-006',
+            name: 'Lane Change Validation',
+            status: 'completed',
+            noOfVehicle: 12,
+            brands: 'Audi, Mercedes',
+            scenarioType: 'Behavioral',
+            noOfScenarios: 8,
+            platform: 'AirSim',
+            environment: 'Highway',
+            startDate: '2025-10-16T13:15:00Z'
+          }
+        ],
+        pages: 3,
+        total: 18,
+        page: pageNo - 1,
+        size: 10
+      }
+    }
+  }
+
+  // Simulate pagination
+  const startIndex = (pageNo - 1) * 10
+  const endIndex = startIndex + 10
+  const paginatedContent = mockSimulationData.data.simulationReadByQuery.content.slice(startIndex, endIndex)
+
+  // Return mock data with pagination
+  return Promise.resolve({
+    data: {
+      simulationReadByQuery: {
+        ...mockSimulationData.data.simulationReadByQuery,
+        content: paginatedContent
+      }
+    }
+  })
+
+  // Original code commented out for now
+  /*
   const token = localStorage.getItem('token');
   return fetch(Link, {
     method: 'POST',
@@ -42,6 +146,7 @@ export const getSimData = async (pageNo: number) => {
     .then((result) => result).catch(error => {
       console.log("Error fetching data:::", error.message);
     })
+  */
 }
 //  Simulation data end****
 

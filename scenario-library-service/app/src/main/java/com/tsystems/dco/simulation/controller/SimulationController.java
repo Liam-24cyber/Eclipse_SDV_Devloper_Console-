@@ -24,9 +24,9 @@
 package com.tsystems.dco.simulation.controller;
 
 import com.tsystems.dco.api.SimulationApi;
-import com.tsystems.dco.model.SimulationInput;
-import com.tsystems.dco.model.SimulationPage;
+import com.tsystems.dco.model.*;
 import com.tsystems.dco.simulation.service.SimulationService;
+import com.tsystems.dco.simulation.service.SimulationResultService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,6 +43,7 @@ public class SimulationController implements SimulationApi {
 
   private static final Logger LOGGER = LoggerFactory.getLogger(SimulationController.class);
   private final SimulationService simulationService;
+  private final SimulationResultService simulationResultService;
 
   /**
    * POST /api/simulation/launch : Launch Simulation
@@ -96,5 +97,53 @@ public class SimulationController implements SimulationApi {
     return ResponseEntity
       .status(HttpStatus.OK)
       .body(simulationService.isTrackAssociatedWithSimulation(id));
+  }
+
+  /**
+   * GET /api/simulation/{simulationId}/results : Get simulation results
+   */
+  @Override
+  public ResponseEntity<List<SimulationResult>> getSimulationResults(UUID simulationId) {
+    LOGGER.info("Getting results for simulation {}", simulationId);
+    // For now, return empty list - the actual mapping will be implemented later
+    return ResponseEntity.ok(List.of());
+  }
+
+  /**
+   * GET /api/simulation/{simulationId}/logs : Get simulation logs
+   */
+  @Override
+  public ResponseEntity<SimulationLogPage> getSimulationLogs(UUID simulationId, Integer page, Integer size) {
+    LOGGER.info("Getting logs for simulation {} (page {}, size {})", simulationId, page, size);
+    // For now, return empty page - the actual mapping will be implemented later
+    SimulationLogPage emptyPage = new SimulationLogPage();
+    emptyPage.setContent(List.of());
+    emptyPage.setEmpty(true);
+    emptyPage.setPage(page != null ? page : 0);
+    emptyPage.setSize(size != null ? size : 50);
+    emptyPage.setPages(0);
+    emptyPage.setElements(0);
+    emptyPage.setTotal(0L);
+    return ResponseEntity.ok(emptyPage);
+  }
+
+  /**
+   * GET /api/simulation/{simulationId}/metrics : Get simulation metrics
+   */
+  @Override
+  public ResponseEntity<List<SimulationMetric>> getSimulationMetrics(UUID simulationId) {
+    LOGGER.info("Getting metrics for simulation {}", simulationId);
+    // For now, return empty list - the actual mapping will be implemented later
+    return ResponseEntity.ok(List.of());
+  }
+
+  /**
+   * GET /api/simulation/{simulationId}/summary : Get simulation summary
+   */
+  @Override
+  public ResponseEntity<String> getSimulationSummary(UUID simulationId) {
+    LOGGER.info("Getting summary for simulation {}", simulationId);
+    String summary = simulationResultService.generateResultSummary(simulationId);
+    return ResponseEntity.ok(summary);
   }
 }

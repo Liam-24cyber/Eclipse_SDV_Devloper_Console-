@@ -26,11 +26,15 @@ package com.tsystems.dco.scenario;
 import com.tsystems.dco.scenario.feign.ScenarioFeignClient;
 import com.tsystems.dco.scenario.model.SimulationInput;
 import com.tsystems.dco.scenario.model.SimulationPage;
+import com.tsystems.dco.scenario.model.SimulationResult;
+import com.tsystems.dco.scenario.model.SimulationLog;
+import com.tsystems.dco.scenario.model.SimulationMetric;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
@@ -61,5 +65,23 @@ public class SimulationRestClient implements SimulationClient {
   public SimulationPage simulationReadByQuery(String query, String search, Integer page, Integer size, List<String> sort) {
     ResponseEntity<SimulationPage> simulationPageResponseEntity = client.simulationReadByQuery(query, search, page, size, sort);
     return simulationPageResponseEntity.getBody();
+  }
+
+  @Override
+  public SimulationResult getSimulationResults(UUID simulationId) {
+    ResponseEntity<SimulationResult> responseEntity = client.getSimulationResults(simulationId);
+    return responseEntity.getBody();
+  }
+
+  @Override
+  public List<SimulationLog> getSimulationLogs(UUID simulationId) {
+    ResponseEntity<List<SimulationLog>> responseEntity = client.getSimulationLogs(simulationId);
+    return responseEntity.getBody();
+  }
+
+  @Override
+  public List<SimulationMetric> getSimulationMetrics(UUID simulationId) {
+    ResponseEntity<List<SimulationMetric>> responseEntity = client.getSimulationMetrics(simulationId);
+    return responseEntity.getBody();
   }
 }

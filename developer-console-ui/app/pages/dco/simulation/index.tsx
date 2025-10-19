@@ -1,6 +1,7 @@
 import { Box, Table } from '@dco/sdv-ui'
 import { useStoreActions } from 'easy-peasy'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import Dco from '..'
 import { getSimData, simRowData } from '../../../services/functionSimulation.service'
 import CounterWithToolTip from '../../shared/counterWithToolTip'
@@ -10,6 +11,7 @@ import Status from '../../shared/status'
 // simulation table 
 const Simulation = () => {
   const setCount = useStoreActions((actions: any) => actions.setCount)
+  const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageData, setPageData] = useState({
     rowData: [],
@@ -17,6 +19,10 @@ const Simulation = () => {
     totalPages: 0,
     totalSimulations: 0,
   })
+
+  const handleViewResults = (simulationId: string) => {
+    router.push(`/dco/simulation/results/${simulationId}`)
+  }
   useEffect(() => {
     setPageData((prevState) => ({
       ...prevState,
@@ -69,6 +75,37 @@ const Simulation = () => {
   {
     Header: 'Start Date ',
     accessor: 'date',
+  },
+  {
+    Header: 'Actions',
+    accessor: 'actions',
+    formatter: (value: any, cell: any) => {
+      const simulationId = cell?.row?.values?.id || cell?.row?.original?.id
+      return (
+        <button
+          onClick={() => handleViewResults(simulationId)}
+          style={{
+            background: '#0088cc',
+            color: 'white',
+            border: 'none',
+            padding: '6px 12px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontSize: '12px'
+          }}
+          onMouseOver={(e) => {
+            const target = e.target as HTMLButtonElement
+            target.style.background = '#006699'
+          }}
+          onMouseOut={(e) => {
+            const target = e.target as HTMLButtonElement
+            target.style.background = '#0088cc'
+          }}
+        >
+          View Results
+        </button>
+      )
+    }
   }]
 
   return (<Dco>

@@ -25,11 +25,21 @@ package com.tsystems.dco.scenario;
 
 import com.tsystems.dco.scenario.model.SimulationInput;
 import com.tsystems.dco.scenario.model.SimulationPage;
+import com.tsystems.dco.scenario.model.SimulationResult;
+import com.tsystems.dco.scenario.model.SimulationLog;
+import com.tsystems.dco.scenario.model.SimulationMetric;
 import java.util.List;
+import java.util.UUID;
 
 public interface SimulationClient {
 
   String launchSimulation(SimulationInput simulationInput);
 
   SimulationPage simulationReadByQuery(String query, String search, Integer page, Integer size, List<String> sort);
+  
+  SimulationResult getSimulationResults(UUID simulationId);
+  
+  List<SimulationLog> getSimulationLogs(UUID simulationId);
+  
+  List<SimulationMetric> getSimulationMetrics(UUID simulationId);
 }

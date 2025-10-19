@@ -265,6 +265,79 @@ paths:
                 $ref: "#/components/schemas/SimulationPage"
         "400":
           description: Bad Request
+  /api/simulation/results/{simulationId}:
+    get:
+      tags:
+        - Simulation
+      summary: Get simulation results
+      description: Get detailed results for a specific simulation
+      operationId: getSimulationResults
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationResult"
+        "404":
+          description: Not Found
+  /api/simulation/logs/{simulationId}:
+    get:
+      tags:
+        - Simulation
+      summary: Get simulation logs
+      description: Get logs for a specific simulation
+      operationId: getSimulationLogs
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SimulationLog"
+        "404":
+          description: Not Found
+  /api/simulation/metrics/{simulationId}:
+    get:
+      tags:
+        - Simulation
+      summary: Get simulation metrics
+      description: Get metrics for a specific simulation
+      operationId: getSimulationMetrics
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SimulationMetric"
+        "404":
+          description: Not Found
 components:
   schemas:
     ScenarioInput:
@@ -452,9 +525,89 @@ components:
         startDate:
           type: string
           format: date-time
+        endDate:
+          type: string
+          format: date-time
+        executionDuration:
+          type: integer
+          format: int32
+          description: Duration in seconds
+        resultSummary:
+          type: string
+        errorMessage:
+          type: string
         description:
           type: string
       description: Simulation Data
+    SimulationResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [SUCCESS, FAILURE, PARTIAL]
+        summary:
+          type: string
+        detailedResults:
+          type: string
+        artifactPath:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+      description: Detailed simulation result data
+    SimulationLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        logLevel:
+          type: string
+          enum: [DEBUG, INFO, WARN, ERROR, FATAL]
+        component:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        additionalData:
+          type: string
+      description: Simulation log entry
+    SimulationMetric:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        metricName:
+          type: string
+        metricValue:
+          type: number
+          format: double
+        unit:
+          type: string
+        category:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      description: Simulation performance metric
     ScenarioType:
       type: string
       enum:

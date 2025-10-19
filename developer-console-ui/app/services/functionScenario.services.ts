@@ -3,6 +3,7 @@ import axios from 'axios'
 import { Link } from '../libs/apollo'
 import { GET_SCENARIO } from './queries'
 import { setTimeOutFunction } from './functionShared'
+import { mockScenariosData, SCENARIOS_MOCK_CONFIG } from './mockData/scenarios.mock'
 
 //  scenario active and archived tab data start****
 export const libRowData = (rawData: any) =>
@@ -24,6 +25,75 @@ export const getLibData = async (pageNo: any, searchval: any) => {
   if (searchval != '') {
     pageNo = 1
   }
+
+  // Use comprehensive mock data
+  if (SCENARIOS_MOCK_CONFIG.USE_MOCK_DATA) {
+    // Simulate network delay
+    if (SCENARIOS_MOCK_CONFIG.MOCK_DELAY > 0) {
+      await new Promise(resolve => setTimeout(resolve, SCENARIOS_MOCK_CONFIG.MOCK_DELAY))
+    }
+    
+    // Transform mock data to match expected format
+    const transformedData = {
+      data: {
+        searchScenarioByPattern: {
+          content: mockScenariosData.data.scenarioReadByQuery.content.map(scenario => ({
+            id: scenario.id,
+            name: scenario.name,
+            type: scenario.type,
+            description: scenario.description,
+            createdBy: `${scenario.type.toLowerCase()}@dco.com`,
+            lastModifiedAt: scenario.lastModified,
+            file: {
+              id: `file-${scenario.id}`,
+              path: `/scenarios/${scenario.file.name}`,
+              size: scenario.file.size,
+              checksum: `hash-${scenario.id}`,
+              updatedBy: `${scenario.type.toLowerCase()}@dco.com`,
+              updatedOn: scenario.file.uploadDate
+            }
+          })),
+          empty: false,
+          first: pageNo === 1,
+          last: pageNo >= mockScenariosData.data.scenarioReadByQuery.pages,
+          page: pageNo - 1,
+          size: 10,
+          pages: mockScenariosData.data.scenarioReadByQuery.pages,
+          elements: mockScenariosData.data.scenarioReadByQuery.content.length,
+          total: mockScenariosData.data.scenarioReadByQuery.total
+        }
+      }
+    }
+
+    // Filter by search if provided
+    let filteredContent = transformedData.data.searchScenarioByPattern.content
+    if (searchval && searchval.trim() !== '') {
+      filteredContent = filteredContent.filter(scenario =>
+        scenario.name.toLowerCase().includes(searchval.toLowerCase()) ||
+        scenario.type.toLowerCase().includes(searchval.toLowerCase()) ||
+        scenario.description.toLowerCase().includes(searchval.toLowerCase())
+      )
+    }
+
+  // Simulate pagination
+  const startIndex = (pageNo - 1) * 10
+  const endIndex = startIndex + 10
+  const paginatedContent = filteredContent.slice(startIndex, endIndex)
+
+  // Return mock data
+  return Promise.resolve({
+    data: {
+      searchScenarioByPattern: {
+        ...mockScenarioData.data.searchScenarioByPattern,
+        content: paginatedContent,
+        total: filteredContent.length,
+        pages: Math.ceil(filteredContent.length / 10)
+      }
+    }
+  })
+
+  // Original code commented out for now
+  /*
   const token = localStorage.getItem('token');
   return fetch(Link, {
     method: 'POST',
@@ -45,6 +115,7 @@ export const getLibData = async (pageNo: any, searchval: any) => {
     .catch((error) => {
       console.log('Error fetching data:::', error.message)
     })
+  */
 }
 //  scenario active and archived tab data end****
 

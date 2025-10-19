@@ -25,6 +25,9 @@ package com.tsystems.dco.scenario;
 
 import com.tsystems.dco.scenario.model.SimulationInput;
 import com.tsystems.dco.scenario.model.SimulationPage;
+import com.tsystems.dco.scenario.model.SimulationResult;
+import com.tsystems.dco.scenario.model.SimulationLog;
+import com.tsystems.dco.scenario.model.SimulationMetric;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +37,7 @@ import org.springframework.graphql.data.method.annotation.QueryMapping;
 import org.springframework.stereotype.Controller;
 
 import java.util.List;
+import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor
@@ -66,6 +70,36 @@ public class SimulationController {
   public SimulationPage simulationReadByQuery(@Argument String query, @Argument String search, @Argument Integer page, @Argument Integer size, @Argument List<String> sort) {
     LOGGER.info("simulation read by query");
     return simulationClient.simulationReadByQuery(query, search, page, size, sort);
+  }
+
+  /**
+   * @param simulationId
+   * @return SimulationResult
+   */
+  @QueryMapping
+  public SimulationResult getSimulationResults(@Argument UUID simulationId) {
+    LOGGER.info("Getting simulation results for simulationId: {}", simulationId);
+    return simulationClient.getSimulationResults(simulationId);
+  }
+
+  /**
+   * @param simulationId
+   * @return List<SimulationLog>
+   */
+  @QueryMapping
+  public List<SimulationLog> getSimulationLogs(@Argument UUID simulationId) {
+    LOGGER.info("Getting simulation logs for simulationId: {}", simulationId);
+    return simulationClient.getSimulationLogs(simulationId);
+  }
+
+  /**
+   * @param simulationId
+   * @return List<SimulationMetric>
+   */
+  @QueryMapping
+  public List<SimulationMetric> getSimulationMetrics(@Argument UUID simulationId) {
+    LOGGER.info("Getting simulation metrics for simulationId: {}", simulationId);
+    return simulationClient.getSimulationMetrics(simulationId);
   }
 
 }

@@ -25,12 +25,11 @@ package com.tsystems.dco.simulation.entity;
 
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import com.tsystems.dco.model.ScenarioType;
 
 import jakarta.persistence.*;
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -40,67 +39,50 @@ import java.util.UUID;
 @EntityListeners({
   AuditingEntityListener.class
 })
-@Entity(name = "simulation")
-public class SimulationEntity {
+@Entity(name = "simulation_results")
+public class SimulationResultEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   @Column(name = "id")
   private UUID id;
 
-  @Column(name = "name")
-  private String name;
+  @Column(name = "simulation_id", nullable = false)
+  private UUID simulationId;
 
-  @Column(name = "environment")
-  private String environment;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "result_type", nullable = false, length = 50)
+  private ResultType resultType;
 
-  @Column(name = "platform")
-  private String platform;
+  @Column(name = "title")
+  private String title;
 
-  @Column(name = "scenario_type")
-  private ScenarioType scenarioType;
+  @Column(name = "content", columnDefinition = "TEXT")
+  private String content;
 
-  @Column(name = "status")
-  private String status;
+  @Column(name = "file_path", length = 500)
+  private String filePath;
 
-  @Column(name = "hardware")
-  private String hardware;
+  @Column(name = "file_size")
+  private Long fileSize;
 
-  @Column(name = "description")
-  private String description;
+  @Column(name = "mime_type", length = 100)
+  private String mimeType;
 
   @CreatedDate
   @Column(name = "created_at")
   private Instant createdAt;
 
-  @Column(name = "tracks")
-  @ElementCollection(targetClass = UUID.class)
-  private List<UUID> tracks;
+  @LastModifiedDate
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
-  @Column(name = "scenarios")
-  @ElementCollection(targetClass = UUID.class)
-  private List<UUID> scenarios;
+  // Foreign key relationship
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "simulation_id", insertable = false, updatable = false)
+  private SimulationEntity simulation;
 
-  @Column(name = "campaign_id")
-  private UUID campaignId;
-
-  @CreatedDate
-  @Column(name = "start_date")
-  private Instant startDate;
-
-  @Column(name = "created_by")
-  private String createdBy;
-
-  @Column(name = "end_date")
-  private Instant endDate;
-
-  @Column(name = "execution_duration")
-  private Integer executionDuration; // duration in seconds
-
-  @Column(name = "result_summary", length = 1000)
-  private String resultSummary;
-
-  @Column(name = "error_message", length = 1000)
-  private String errorMessage;
-
+  public enum ResultType {
+    LOGS, METRICS, FILES, SUMMARY
+  }
 }

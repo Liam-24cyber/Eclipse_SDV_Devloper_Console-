@@ -291,6 +291,106 @@ paths:
           description: Bad Request
         "404":
           description: Not Found
+  /api/simulation/{simulationId}/results:
+    get:
+      tags:
+      - Simulation
+      summary: Get simulation results
+      description: Get all results for a simulation
+      operationId: getSimulationResults
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SimulationResult"
+  /api/simulation/{simulationId}/logs:
+    get:
+      tags:
+      - Simulation
+      summary: Get simulation logs
+      description: Get logs for a simulation with pagination
+      operationId: getSimulationLogs
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SimulationLogPage"
+  /api/simulation/{simulationId}/metrics:
+    get:
+      tags:
+      - Simulation
+      summary: Get simulation metrics
+      description: Get all metrics for a simulation
+      operationId: getSimulationMetrics
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SimulationMetric"
+  /api/simulation/{simulationId}/summary:
+    get:
+      tags:
+      - Simulation
+      summary: Get simulation summary
+      description: Generate and get result summary for a simulation
+      operationId: getSimulationSummary
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
 components:
   schemas:
     ScenarioInput:
@@ -479,9 +579,139 @@ components:
         startDate:
           type: string
           format: date-time
+        endDate:
+          type: string
+          format: date-time
+        executionDuration:
+          type: integer
+          format: int32
+        resultSummary:
+          type: string
+        errorMessage:
+          type: string
         description:
           type: string
       description: Simulation Data
+    SimulationResult:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        resultType:
+          $ref: '#/components/schemas/ResultType'
+        title:
+          type: string
+        content:
+          type: string
+        filePath:
+          type: string
+        fileSize:
+          type: integer
+          format: int64
+        mimeType:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      description: Simulation Result Data
+    SimulationLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        logLevel:
+          $ref: '#/components/schemas/LogLevel'
+        message:
+          type: string
+        component:
+          type: string
+        timestampLog:
+          type: string
+          format: date-time
+      description: Simulation Log Entry
+    SimulationLogPage:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationLog'
+        empty:
+          type: boolean
+        first:
+          type: boolean
+        last:
+          type: boolean
+        page:
+          type: integer
+          format: int32
+        size:
+          type: integer
+          format: int32
+        pages:
+          type: integer
+          format: int32
+        elements:
+          type: integer
+          format: int32
+        total:
+          type: integer
+          format: int64
+      description: Paginated Simulation Logs
+    SimulationMetric:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        simulationId:
+          type: string
+          format: uuid
+        metricName:
+          type: string
+        metricValue:
+          type: number
+          format: double
+        metricUnit:
+          type: string
+        category:
+          $ref: '#/components/schemas/MetricCategory'
+        recordedAt:
+          type: string
+          format: date-time
+      description: Simulation Metric Data
+    ResultType:
+      type: string
+      enum:
+        - LOGS
+        - METRICS
+        - FILES
+        - SUMMARY
+    LogLevel:
+      type: string
+      enum:
+        - INFO
+        - WARN
+        - ERROR
+        - DEBUG
+    MetricCategory:
+      type: string
+      enum:
+        - PERFORMANCE
+        - VEHICLE
+        - SCENARIO
+        - SYSTEM
     ScenarioType:
       type: string
       enum:

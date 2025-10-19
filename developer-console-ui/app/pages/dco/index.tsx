@@ -20,6 +20,7 @@ const Dco = ({ children }: any) => {
   const trackTabClicked = router.pathname === '/dco/tracksMain'
   const libTabClicked = router.pathname.includes('/dco/scenario')
   const simulationTabClicked = router.pathname === '/dco/simulation'
+  const resultsTabClicked = router.pathname === '/dco/results'
   const token = localStorage.getItem('token')
   return (<>{
     <Layout>
@@ -36,6 +37,7 @@ const Dco = ({ children }: any) => {
                       {libTabClicked && <Headline level={1}> {Count() || 0} scenarios</Headline>}
                       {trackTabClicked && <Headline level={1}>{Count() || 0} tracks</Headline>}
                       {simulationTabClicked && <Headline level={1}> {Count() || 0} simulations</Headline>}
+                      {resultsTabClicked && <Headline level={1}> {Count() || 0} results</Headline>}
                     </Flex.Item>
                     <Flex.Item textAlign='left' valign='bottom'>
                       {libTabClicked && (<Button style={{ marginTop: '-.3em' }} data-testid='newReleaseBtn'
@@ -50,6 +52,11 @@ const Dco = ({ children }: any) => {
                         onClick={() => onClickNewSimulation()}>
                         New Simulation
                       </Button>)}
+                      {resultsTabClicked && (
+                        <div style={{ marginTop: '-.3em', color: '#666', fontSize: '14px', padding: '8px 0' }}>
+                          Results are generated automatically from simulations
+                        </div>
+                      )}
                     </Flex.Item>
                   </Flex>
                 </Box>
@@ -66,6 +73,9 @@ const Dco = ({ children }: any) => {
                   </ActiveLink>
                   <ActiveLink href={checkRoute('/dco/simulation', router, pathname)}>
                     <NavigationBarItem>simulations</NavigationBarItem>
+                  </ActiveLink>
+                  <ActiveLink href={checkRoute('/dco/results', router, pathname)}>
+                    <NavigationBarItem>results</NavigationBarItem>
                   </ActiveLink>
                 </NavigationBar>
               </Flex.Item>

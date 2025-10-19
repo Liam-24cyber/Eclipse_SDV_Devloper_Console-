@@ -28,3 +28,68 @@ type FileData {
   updatedOn: String
   releaseNotes: String
 }
+
+type SimulationResult {
+  id: ID
+  simulationId: ID
+  resultType: ResultTypeEnum
+  title: String
+  content: String
+  filePath: String
+  fileSize: Int
+  mimeType: String
+  createdAt: String
+  updatedAt: String
+}
+
+type SimulationLog {
+  id: ID
+  simulationId: ID
+  logLevel: LogLevelEnum
+  message: String
+  component: String
+  timestampLog: String
+}
+
+type SimulationMetric {
+  id: ID
+  simulationId: ID
+  metricName: String
+  metricValue: Float
+  metricUnit: String
+  category: MetricCategoryEnum
+  recordedAt: String
+}
+
+type SimulationLogPage {
+  content: [SimulationLog]
+  empty: Boolean
+  first: Boolean
+  last: Boolean
+  page: Int
+  size: Int
+  pages: Int
+  elements: Int
+  total: Int
+}
+
+enum ResultTypeEnum {
+  LOGS
+  METRICS
+  FILES
+  SUMMARY
+}
+
+enum LogLevelEnum {
+  INFO
+  WARN
+  ERROR
+  DEBUG
+}
+
+enum MetricCategoryEnum {
+  PERFORMANCE
+  VEHICLE
+  SCENARIO
+  SYSTEM
+}
