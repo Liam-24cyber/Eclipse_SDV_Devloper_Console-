@@ -17,9 +17,9 @@
   "dependencies": {
     "@apollo/client": "^3.6.1",
     "@apollo/react-testing": "^4.0.0",
+    "@dco/sdv-ui": "file:./dco-sdv-ui-1.120.0.tgz",
     "@react-hook/resize-observer": "^1.2.5",
     "axios": "^0.27.2",
-    "@dco/sdv-ui":"file:./dco-sdv-ui-1.120.0.tgz",
     "easy-peasy": "^5.0.4",
     "graphql": "^16.4.0",
     "jest-fetch-mock": "^3.0.3",
@@ -41,6 +41,7 @@
     "@testing-library/react": "12.1.2",
     "@testing-library/user-event": "13.5.0",
     "@types/react": "17.0.36",
+    "@types/react-dom": "^19.1.9",
     "babel-jest": "^28.0.3",
     "cross-env": "^7.0.3",
     "eslint": "<8.0.0",
@@ -50,7 +51,7 @@
     "license-checker": "^25.0.1",
     "prettier": "^2.4.1",
     "sonarqube-scanner": "^2.8.1",
-    "typescript": "4.4.2"
+    "typescript": "^5.9.2"
   },
   "prettier": {
     "singleQuote": true,
