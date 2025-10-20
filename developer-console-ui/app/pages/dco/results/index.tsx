@@ -21,12 +21,16 @@ const Results = () => {
   })
 
   useEffect(() => {
+    console.log('🚀 Results page useEffect triggered, currentPage:', currentPage)
     setPageData((prevState) => ({
       ...prevState,
       rowData: [],
       isLoading: true,
     }))
+    
+    console.log('📞 About to call getResultsData...')
     getResultsData(currentPage).then((info) => {
+      console.log('✅ getResultsData response:', info)
       setPageData({
         isLoading: false,
         rowData: resultsRowData(info) as any,
@@ -35,7 +39,7 @@ const Results = () => {
       })
       setCount(info?.data?.simulationReadByQuery?.total || 0);
     }).catch((error) => {
-      console.error('Error loading results:', error);
+      console.error('❌ Error loading results:', error);
       setPageData((prevState) => ({
         ...prevState,
         isLoading: false,
@@ -48,41 +52,30 @@ const Results = () => {
   }
 
   const handleViewSimulation = (simulationId: string) => {
-    // Navigate to simulation details (we could enhance this later)
-    router.push('/dco/simulation')
+    router.push(`/dco/simulation/${simulationId}`)
   }
 
   const columns = [
     {
       Header: 'Simulation Name',
-      accessor: 'simulationName',
+      accessor: 'name',
+    },
+    {
+      Header: 'Scenario',
+      accessor: 'scenario',
+    },
+    {
+      Header: 'Track',
+      accessor: 'track',
     },
     {
       Header: 'Status',
       accessor: 'status',
-      formatter: (value: any, cell: any) => {
-        return <Status status={cell?.row?.values?.status} type={'SS'}></Status>
-      }
+      formatter: (value: any, cell: any) => <Status status={cell?.row?.values?.status} type={'SS'}></Status>
     },
     {
-      Header: 'Platform',
-      accessor: 'platform',
-    },
-    {
-      Header: 'Environment',
-      accessor: 'environment',
-    },
-    {
-      Header: 'Scenario Type',
-      accessor: 'scenarioType',
-    },
-    {
-      Header: 'Vehicles',
-      accessor: 'vehicles',
-    },
-    {
-      Header: 'Scenarios',
-      accessor: 'scenarios',
+      Header: 'Created By',
+      accessor: 'createdBy',
     },
     {
       Header: 'Execution Date',
@@ -115,13 +108,13 @@ const Results = () => {
                 target.style.background = '#0088cc'
               }}
             >
-              View Results
+              Results
             </button>
             <button
               onClick={() => handleViewSimulation(simulationId)}
               style={{
                 background: '#28a745',
-                color: 'white',
+                color: 'white', 
                 border: 'none',
                 padding: '4px 8px',
                 borderRadius: '4px',
@@ -130,14 +123,14 @@ const Results = () => {
               }}
               onMouseOver={(e) => {
                 const target = e.target as HTMLButtonElement
-                target.style.background = '#218838'
+                target.style.background = '#1e7e34'
               }}
               onMouseOut={(e) => {
                 const target = e.target as HTMLButtonElement
                 target.style.background = '#28a745'
               }}
             >
-              View Simulation
+              View
             </button>
           </div>
         )

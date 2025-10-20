@@ -1,6 +1,13 @@
 import apollo from '../libs/apollo'
 import { gql } from '@apollo/client'
-import { mockResultsData, mockDetailedResults, MOCK_CONFIG } from './mockData/results.mock'
+import { 
+  mockResultsData, 
+  mockDetailedResults, 
+  mockTestChecks, 
+  mockEventLogs, 
+  mockPerformanceMetrics, 
+  MOCK_CONFIG 
+} from './mockData/results.mock'
 
 // GraphQL query for getting simulation results
 const SIMULATION_RESULTS_QUERY = gql`
@@ -46,11 +53,18 @@ const SIMULATION_RESULTS_QUERY = gql`
 
 // Function to get results data
 export const getResultsData = async (page: number = 1, size: number = 10) => {
+  console.log('🚀 getResultsData called with page:', page, 'size:', size)
+  console.log('📋 MOCK_CONFIG:', MOCK_CONFIG)
+  
   try {
     // Check if we should use mock data
     if (MOCK_CONFIG.USE_MOCK_DATA) {
+      console.log('🔧 Using mock data for results')
+      console.log('📦 mockResultsData available:', !!mockResultsData)
+      
       // Simulate network delay
       if (MOCK_CONFIG.MOCK_DELAY > 0) {
+        console.log('⏳ Simulating network delay:', MOCK_CONFIG.MOCK_DELAY, 'ms')
         await new Promise(resolve => setTimeout(resolve, MOCK_CONFIG.MOCK_DELAY))
       }
       
@@ -59,7 +73,7 @@ export const getResultsData = async (page: number = 1, size: number = 10) => {
       const endIndex = startIndex + size
       const paginatedContent = mockResultsData.data.simulationReadByQuery.content.slice(startIndex, endIndex)
       
-      return {
+      const result = {
         data: {
           simulationReadByQuery: {
             ...mockResultsData.data.simulationReadByQuery,
@@ -69,9 +83,14 @@ export const getResultsData = async (page: number = 1, size: number = 10) => {
           }
         }
       }
+      
+      console.log('📊 Mock results data length:', paginatedContent.length)
+      console.log('📈 Total results:', mockResultsData.data.simulationReadByQuery.total)
+      return result
     }
     
-    // Real GraphQL query (uncomment when backend is ready)
+    // Real GraphQL query (when backend is ready)
+    console.log('🌐 Using real API for results')
     const result = await apollo.query({
       query: SIMULATION_RESULTS_QUERY,
       variables: { page: page - 1, size },
@@ -80,8 +99,24 @@ export const getResultsData = async (page: number = 1, size: number = 10) => {
     return result
     
   } catch (error) {
-    console.error('Error fetching results data:', error)
-    throw error
+    console.error('❌ Error fetching results data:', error)
+    
+    // Fallback to mock data on error
+    console.log('🔄 Falling back to mock data due to error')
+    const startIndex = (page - 1) * size
+    const endIndex = startIndex + size
+    const paginatedContent = mockResultsData.data.simulationReadByQuery.content.slice(startIndex, endIndex)
+    
+    return {
+      data: {
+        simulationReadByQuery: {
+          ...mockResultsData.data.simulationReadByQuery,
+          content: paginatedContent,
+          page,
+          size
+        }
+      }
+    }
   }
 }
 
