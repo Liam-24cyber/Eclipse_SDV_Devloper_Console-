@@ -2,6 +2,10 @@
 
 This repository contains the SDV Developer Console UI and supporting services used to manage and inspect simulation runs.
 
+## 🎥 Demo Video
+**Phase 1 Extension Implementation Demo:** [Watch on Google Drive](https://drive.google.com/file/d/12nKfTzmzRVWHeS9pZUhZa4PUaauLeYIs/view?usp=drive_link)
+
+
 Key features
 - Results page: paginated, sortable table of simulations
 - Row actions: Results, View, Delete (confirmation + immediate UI update)
