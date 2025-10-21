@@ -18,6 +18,7 @@ export const simRowData = (rawData: RawDataSimType) =>
       date: new Date(item.startDate).toLocaleDateString() +
         ', ' +
         new Date(item.startDate).toLocaleTimeString(),
+      createdBy: item.createdBy || 'System'
     }
   })
 export const getSimData = async (pageNo: number) => {
@@ -36,7 +37,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 3,
             platform: 'CARLA',
             environment: 'Highway',
-            startDate: '2025-10-15T10:30:00Z'
+            startDate: '2025-10-15T10:30:00Z',
+            createdBy: 'john.doe@example.com'
           },
           {
             id: 'sim-002',
@@ -48,7 +50,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 5,
             platform: 'SUMO',
             environment: 'Urban',
-            startDate: '2025-10-14T14:20:00Z'
+            startDate: '2025-10-14T14:20:00Z',
+            createdBy: 'sarah.smith@example.com'
           },
           {
             id: 'sim-003',
@@ -60,7 +63,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 7,
             platform: 'AirSim',
             environment: 'Mixed',
-            startDate: '2025-10-19T09:00:00Z'
+            startDate: '2025-10-19T09:00:00Z',
+            createdBy: 'mike.johnson@example.com'
           },
           {
             id: 'sim-004',
@@ -72,7 +76,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 4,
             platform: 'CARLA',
             environment: 'Urban',
-            startDate: '2025-10-18T16:30:00Z'
+            startDate: '2025-10-18T16:30:00Z',
+            createdBy: 'anna.wilson@example.com'
           },
           {
             id: 'sim-005',
@@ -84,7 +89,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 6,
             platform: 'SUMO',
             environment: 'Parking Lot',
-            startDate: '2025-10-17T11:45:00Z'
+            startDate: '2025-10-17T11:45:00Z',
+            createdBy: 'david.brown@example.com'
           },
           {
             id: 'sim-006',
@@ -96,7 +102,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 8,
             platform: 'AirSim',
             environment: 'Highway',
-            startDate: '2025-10-16T13:15:00Z'
+            startDate: '2025-10-16T13:15:00Z',
+            createdBy: 'lisa.garcia@example.com'
           }
         ],
         pages: 3,
