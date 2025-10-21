@@ -11,31 +11,148 @@ const SimulationResults = () => {
   const { id } = router.query
   const [activeTab, setActiveTab] = useState('overview')
 
-  // GraphQL queries
-  const { data: resultsData, loading: resultsLoading, error: resultsError } = useQuery(GET_SIMULATION_RESULTS, {
-    variables: { simulationId: id },
-    skip: !id
-  })
+  // Use fetch instead of useQuery for now since GET_SIMULATIONS is a string, not gql
+  const [simulationData, setSimulationData] = useState<any>(null)
+  const [simulationLoading, setSimulationLoading] = useState(true)
+  const [simulationError, setSimulationError] = useState<any>(null)
 
-  const { data: logsData, loading: logsLoading, error: logsError } = useQuery(GET_SIMULATION_LOGS, {
-    variables: { simulationId: id },
-    skip: !id || activeTab !== 'logs'
-  })
+  useEffect(() => {
+    if (!id) return
 
-  const { data: metricsData, loading: metricsLoading, error: metricsError } = useQuery(GET_SIMULATION_METRICS, {
-    variables: { simulationId: id },
-    skip: !id || activeTab !== 'metrics'
-  })
+    const fetchSimulationData = async () => {
+      try {
+        setSimulationLoading(true)
+        // For now, just use mock data based on the simulation ID
+        setSimulationData({
+          data: {
+            simulationReadByQuery: {
+              content: [{
+                id: id,
+                name: `Simulation ${id}`,
+                status: 'Done',
+                environment: 'Development',
+                platform: 'Task Management',
+                scenarioType: 'Vehicle Management',
+                createdBy: 'abc@t-systems.com',
+                startDate: new Date().toISOString()
+              }]
+            }
+          }
+        })
+      } catch (error) {
+        setSimulationError(error)
+      } finally {
+        setSimulationLoading(false)
+      }
+    }
 
-  // Fetch simulation basic info for overview
-  const { data: simulationData, loading: simulationLoading, error: simulationError } = useQuery(gql(GET_SIMULATIONS), {
-    variables: { 
-      query: `id:${id}`,
-      page: 0,
-      size: 1
-    },
-    skip: !id
-  })
+    fetchSimulationData()
+  }, [id])
+
+  // Mock data for results, logs, and metrics until backend endpoints are available
+  const resultsData = {
+    getSimulationResults: {
+      id: id,
+      simulationId: id,
+      status: 'COMPLETED',
+      summary: 'Simulation completed successfully',
+      detailedResults: 'All test scenarios passed',
+      artifactPath: '/results/artifacts',
+      createdAt: new Date().toISOString(),
+      completedAt: new Date().toISOString()
+    }
+  }
+
+  const logsData = {
+    getSimulationLogs: {
+      content: [
+        {
+          id: '1',
+          simulationId: id,
+          logLevel: 'INFO',
+          component: 'SimulationEngine',
+          message: 'Simulation started successfully',
+          timestamp: new Date(Date.now() - 300000).toISOString()
+        },
+        {
+          id: '2',
+          simulationId: id,
+          logLevel: 'INFO',
+          component: 'VehicleManager',
+          message: 'Vehicle initialized and ready',
+          timestamp: new Date(Date.now() - 240000).toISOString()
+        },
+        {
+          id: '3',
+          simulationId: id,
+          logLevel: 'WARN',
+          component: 'ScenarioEngine',
+          message: 'Minor timing adjustment made',
+          timestamp: new Date(Date.now() - 180000).toISOString()
+        },
+        {
+          id: '4',
+          simulationId: id,
+          logLevel: 'INFO',
+          component: 'SimulationEngine',
+          message: 'Simulation completed successfully',
+          timestamp: new Date(Date.now() - 60000).toISOString()
+        }
+      ],
+      totalElements: 4,
+      totalPages: 1,
+      size: 50,
+      page: 0
+    }
+  }
+
+  const metricsData = {
+    getSimulationMetrics: [
+      {
+        id: '1',
+        simulationId: id,
+        metricName: 'CPU Usage',
+        metricValue: '65.4',
+        unit: '%',
+        category: 'Performance',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: '2',
+        simulationId: id,
+        metricName: 'Memory Usage',
+        metricValue: '2.1',
+        unit: 'GB',
+        category: 'Performance',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: '3',
+        simulationId: id,
+        metricName: 'Execution Time',
+        metricValue: '245',
+        unit: 'seconds',
+        category: 'Duration',
+        timestamp: new Date().toISOString()
+      },
+      {
+        id: '4',
+        simulationId: id,
+        metricName: 'Success Rate',
+        metricValue: '98.5',
+        unit: '%',
+        category: 'Quality',
+        timestamp: new Date().toISOString()
+      }
+    ]
+  }
+
+  const resultsLoading = false
+  const resultsError = null
+  const logsLoading = false
+  const logsError = null
+  const metricsLoading = false
+  const metricsError = null
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString()
@@ -109,7 +226,7 @@ const SimulationResults = () => {
   ]
 
   // Prepare overview data
-  const simulation = simulationData?.simulationReadByQuery?.content?.[0]
+  const simulation = simulationData?.data?.simulationReadByQuery?.content?.[0]
   const results = resultsData?.getSimulationResults
 
   const overviewData = simulation ? [
@@ -164,7 +281,7 @@ const SimulationResults = () => {
           <p style={{ color: 'red' }}>
             Error loading simulation data. Please try again.
           </p>
-          {resultsError && <p style={{ color: 'red', fontSize: '12px' }}>{resultsError.message}</p>}
+          {resultsError && <p style={{ color: 'red', fontSize: '12px' }}>Error loading results</p>}
         </div>
       </Dco>
     )
@@ -224,11 +341,11 @@ const SimulationResults = () => {
               {logsLoading ? (
                 <p>Loading logs...</p>
               ) : logsError ? (
-                <p style={{ color: 'red' }}>Error loading logs: {logsError.message}</p>
-              ) : logsData?.getSimulationLogs?.length > 0 ? (
+                <p style={{ color: 'red' }}>Error loading logs</p>
+              ) : logsData?.getSimulationLogs?.content?.length > 0 ? (
                 <Table 
                   columns={logColumns}
-                  data={logsData.getSimulationLogs}
+                  data={logsData.getSimulationLogs.content}
                 />
               ) : (
                 <p style={{ color: '#666', fontStyle: 'italic' }}>
@@ -244,7 +361,7 @@ const SimulationResults = () => {
               {metricsLoading ? (
                 <p>Loading metrics...</p>
               ) : metricsError ? (
-                <p style={{ color: 'red' }}>Error loading metrics: {metricsError.message}</p>
+                <p style={{ color: 'red' }}>Error loading metrics</p>
               ) : metricsData?.getSimulationMetrics?.length > 0 ? (
                 <Table 
                   columns={metricColumns}

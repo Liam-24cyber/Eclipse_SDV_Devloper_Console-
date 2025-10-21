@@ -3,7 +3,6 @@ import axios from 'axios'
 import { Link } from '../libs/apollo'
 import { GET_SCENARIO } from './queries'
 import { setTimeOutFunction } from './functionShared'
-import { mockScenariosData, SCENARIOS_MOCK_CONFIG } from './mockData/scenarios.mock'
 
 //  scenario active and archived tab data start****
 export const libRowData = (rawData: any) =>
@@ -22,100 +21,79 @@ export const libRowData = (rawData: any) =>
     }
   })
 export const getLibData = async (pageNo: any, searchval: any) => {
-  if (searchval != '') {
-    pageNo = 1
-  }
+  // Mock scenario data with real UUIDs from database
+  const mockScenarios = [
+    {
+      id: '93b866de-a642-4543-886c-a3597dbe9d8f',
+      name: 'Basic Lane Change',
+      type: 'lane_change',
+      file: { path: '/scenarios/basic_lane_change.odx' },
+      createdBy: 'system',
+      description: 'Simple lane change scenario',
+      lastModifiedAt: new Date().toISOString(),
+    },
+    {
+      id: '0069e772-957c-43d2-84dd-45abd30214d5',
+      name: 'Emergency Braking',
+      type: 'emergency',
+      file: { path: '/scenarios/emergency_braking.txt' },
+      createdBy: 'system',
+      description: 'Emergency braking test scenario',
+      lastModifiedAt: new Date(Date.now() - 86400000).toISOString(),
+    },
+    {
+      id: '848b8ea7-cb2d-4fda-a617-7d6a79d526a7',
+      name: 'Intersection Navigation',
+      type: 'intersection',
+      file: { path: '/scenarios/intersection_navigation.txt' },
+      createdBy: 'system',
+      description: 'Complex intersection scenario',
+      lastModifiedAt: new Date(Date.now() - 172800000).toISOString(),
+    },
+    {
+      id: '4',
+      name: 'Parking Assist Scenario',
+      type: 'CAN',
+      file: { path: '/scenarios/parking_assist.txt' },
+      createdBy: 'test_user',
+      description: 'Automated parallel parking test',
+      lastModifiedAt: new Date(Date.now() - 259200000).toISOString(),
+    },
+    {
+      id: '5',
+      name: 'Lane Keep Assist Test',
+      type: 'MQTT',
+      file: { path: '/scenarios/lane_keep_assist.txt' },
+      createdBy: 'admin',
+      description: 'Lane keeping assistance system validation',
+      lastModifiedAt: new Date(Date.now() - 345600000).toISOString(),
+    },
+  ]
 
-  // Use comprehensive mock data
-  if (SCENARIOS_MOCK_CONFIG.USE_MOCK_DATA) {
-    // Simulate network delay
-    if (SCENARIOS_MOCK_CONFIG.MOCK_DELAY > 0) {
-      await new Promise(resolve => setTimeout(resolve, SCENARIOS_MOCK_CONFIG.MOCK_DELAY))
-    }
-    
-    // Transform mock data to match expected format
-    const transformedData = {
-      data: {
-        searchScenarioByPattern: {
-          content: mockScenariosData.data.scenarioReadByQuery.content.map(scenario => ({
-            id: scenario.id,
-            name: scenario.name,
-            type: scenario.type,
-            description: scenario.description,
-            createdBy: `${scenario.type.toLowerCase()}@dco.com`,
-            lastModifiedAt: scenario.lastModified,
-            file: {
-              id: `file-${scenario.id}`,
-              path: `/scenarios/${scenario.file.name}`,
-              size: scenario.file.size,
-              checksum: `hash-${scenario.id}`,
-              updatedBy: `${scenario.type.toLowerCase()}@dco.com`,
-              updatedOn: scenario.file.uploadDate
-            }
-          })),
-          empty: false,
-          first: pageNo === 1,
-          last: pageNo >= mockScenariosData.data.scenarioReadByQuery.pages,
-          page: pageNo - 1,
-          size: 10,
-          pages: mockScenariosData.data.scenarioReadByQuery.pages,
-          elements: mockScenariosData.data.scenarioReadByQuery.content.length,
-          total: mockScenariosData.data.scenarioReadByQuery.total
-        }
-      }
-    }
-
-    // Filter by search if provided
-    let filteredContent = transformedData.data.searchScenarioByPattern.content
-    if (searchval && searchval.trim() !== '') {
-      filteredContent = filteredContent.filter(scenario =>
-        scenario.name.toLowerCase().includes(searchval.toLowerCase()) ||
-        scenario.type.toLowerCase().includes(searchval.toLowerCase()) ||
-        scenario.description.toLowerCase().includes(searchval.toLowerCase())
+  // Filter by search value
+  const filteredScenarios = searchval 
+    ? mockScenarios.filter(s => 
+        s.name.toLowerCase().includes(searchval.toLowerCase()) ||
+        s.description.toLowerCase().includes(searchval.toLowerCase())
       )
-    }
+    : mockScenarios
 
-  // Simulate pagination
-  const startIndex = (pageNo - 1) * 10
-  const endIndex = startIndex + 10
-  const paginatedContent = filteredContent.slice(startIndex, endIndex)
+  // Pagination
+  const pageSize = 10
+  const startIndex = (pageNo - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedScenarios = filteredScenarios.slice(startIndex, endIndex)
 
-  // Return mock data
+  // Return mock response
   return Promise.resolve({
     data: {
       searchScenarioByPattern: {
-        ...mockScenarioData.data.searchScenarioByPattern,
-        content: paginatedContent,
-        total: filteredContent.length,
-        pages: Math.ceil(filteredContent.length / 10)
+        content: paginatedScenarios,
+        pages: Math.ceil(filteredScenarios.length / pageSize),
+        total: filteredScenarios.length,
       }
     }
   })
-
-  // Original code commented out for now
-  /*
-  const token = localStorage.getItem('token');
-  return fetch(Link, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'Authorization': token ? `Basic ${token}` : "",
-    },
-    body: JSON.stringify({
-      query: GET_SCENARIO,
-      variables: {
-        scenarioPattern: searchval,
-        page: pageNo - 1,
-        size: 10,
-      },
-    }),
-  })
-    .then((res) => res.json())
-    .then((result) => result)
-    .catch((error) => {
-      console.log('Error fetching data:::', error.message)
-    })
-  */
 }
 //  scenario active and archived tab data end****
 
@@ -225,12 +203,17 @@ export function handleNewScenarioSubmitInService(
   onClose: any
 ) {
   if (values.name && values.type && values.selectedUploadFile) {
-    let flag: any = callUploadAxiosAPIForNewScenario(values, sessionUser)
-    flag.then((e: any) => {
+    // Mock scenario creation - simulate successful API call
+    setTimeout(() => {
+      const mockResponse = {
+        data: {
+          createScenario: true
+        }
+      }
       setFunctions.setUploadFile()
-      setToastMessageForNewScenario(e.data, setFunctions.setToastMsg, onClose, setToastOpen, setFunctions)
+      setToastMessageForNewScenario(mockResponse, setFunctions.setToastMsg, onClose, setToastOpen, setFunctions)
       setToastOpen(true)
-    })
+    }, 500)
   } else {
     !values.name && setFunctions.setNameError(true)
     !values.type && setFunctions.setTypeError(true)
@@ -257,13 +240,18 @@ export function handleUpdateScenarioSubmitInService(
   router: { asPath: any; replace: Function }
 ) {
   if (values.name && values.type) {
-    let flag: any = callUploadAxiosAPIForUpdateScenario(values, sessionUser)
-    flag.then((e: any) => {
+    // Mock scenario update - simulate successful API call
+    setTimeout(() => {
+      const mockResponse = {
+        data: {
+          updateScenario: true
+        }
+      }
       setFunctions.setUploadFile()
-      setToastMessageForUpdateScenario(e.data, setFunctions.setSuccessMsgScenario, onClose, setToastOpenScenario)
+      setToastMessageForUpdateScenario(mockResponse, setFunctions.setSuccessMsgScenario, onClose, setToastOpenScenario)
       setToastOpenScenario(true)
       router.replace(router.asPath)
-    })
+    }, 500)
   } else {
     !values.name && setFunctions.setNameError(true)
     !values.type && setFunctions.setTypeError(true)

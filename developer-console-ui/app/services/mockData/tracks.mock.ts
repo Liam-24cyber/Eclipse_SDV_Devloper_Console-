@@ -6,7 +6,7 @@ export const mockTracksData = {
     trackReadByQuery: {
       content: [
         {
-          id: 'track-001',
+          id: 'f1e2d3c4-b5a6-9870-1234-567890abcdef',
           name: 'Nürburgring Nordschleife',
           trackType: 'Racing Circuit',
           state: 'active',
@@ -37,7 +37,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-002',
+          id: 'a2b3c4d5-e6f7-8901-2345-6789abcdef01',
           name: 'Urban Test Circuit',
           trackType: 'City Streets',
           state: 'active',
@@ -74,7 +74,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-003',
+          id: 'b3c4d5e6-f7a8-9012-3456-789abcdef012',
           name: 'Highway Performance Loop',
           trackType: 'Highway',
           state: 'active',
@@ -99,7 +99,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-004',
+          id: 'c4d5e6f7-a8b9-0123-4567-89abcdef0123',
           name: 'Off-Road Adventure',
           trackType: 'Off-Road',
           state: 'maintenance',
@@ -130,7 +130,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-005',
+          id: 'd5e6f7a8-b9c0-1234-5678-9abcdef01234',
           name: 'Winter Testing Ground',
           trackType: 'Test Circuit',
           state: 'active',
@@ -161,7 +161,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-006',
+          id: 'e6f7a8b9-c0d1-2345-6789-abcdef012345',
           name: 'Parking Skills Test',
           trackType: 'Parking Lot',
           state: 'active',
@@ -186,7 +186,7 @@ export const mockTracksData = {
           ]
         },
         {
-          id: 'track-007',
+          id: 'f7a8b9c0-d1e2-3456-789a-bcdef0123456',
           name: 'Emergency Response Circuit',
           trackType: 'Emergency',
           state: 'active',

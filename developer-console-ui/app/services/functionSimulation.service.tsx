@@ -18,6 +18,7 @@ export const simRowData = (rawData: RawDataSimType) =>
       date: new Date(item.startDate).toLocaleDateString() +
         ', ' +
         new Date(item.startDate).toLocaleTimeString(),
+      createdBy: item.createdBy || 'System'
     }
   })
 export const getSimData = async (pageNo: number) => {
@@ -36,7 +37,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 3,
             platform: 'CARLA',
             environment: 'Highway',
-            startDate: '2025-10-15T10:30:00Z'
+            startDate: '2025-10-15T10:30:00Z',
+            createdBy: 'john.doe@example.com'
           },
           {
             id: 'sim-002',
@@ -48,7 +50,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 5,
             platform: 'SUMO',
             environment: 'Urban',
-            startDate: '2025-10-14T14:20:00Z'
+            startDate: '2025-10-14T14:20:00Z',
+            createdBy: 'sarah.smith@example.com'
           },
           {
             id: 'sim-003',
@@ -60,7 +63,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 7,
             platform: 'AirSim',
             environment: 'Mixed',
-            startDate: '2025-10-19T09:00:00Z'
+            startDate: '2025-10-19T09:00:00Z',
+            createdBy: 'mike.johnson@example.com'
           },
           {
             id: 'sim-004',
@@ -72,7 +76,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 4,
             platform: 'CARLA',
             environment: 'Urban',
-            startDate: '2025-10-18T16:30:00Z'
+            startDate: '2025-10-18T16:30:00Z',
+            createdBy: 'anna.wilson@example.com'
           },
           {
             id: 'sim-005',
@@ -84,7 +89,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 6,
             platform: 'SUMO',
             environment: 'Parking Lot',
-            startDate: '2025-10-17T11:45:00Z'
+            startDate: '2025-10-17T11:45:00Z',
+            createdBy: 'david.brown@example.com'
           },
           {
             id: 'sim-006',
@@ -96,7 +102,8 @@ export const getSimData = async (pageNo: number) => {
             noOfScenarios: 8,
             platform: 'AirSim',
             environment: 'Highway',
-            startDate: '2025-10-16T13:15:00Z'
+            startDate: '2025-10-16T13:15:00Z',
+            createdBy: 'lisa.garcia@example.com'
           }
         ],
         pages: 3,
@@ -151,9 +158,46 @@ export const getSimData = async (pageNo: number) => {
 //  Simulation data end****
 
 export function launchSimulation(variable: any, createSimulation: Function, setVariable: any) {
-  variable.scenario = variable.scenario.filter((c: any) => { if (c.checked) { return c.id } }).map((l: any) => l.id)
-  variable.track = variable.track.filter((c: any) => { if (c.checked) { return c.id } }).map((l: any) => l.id)
-  if (variable.title && variable.scenarioType && variable.scenario.length != 0 && variable.track.length != 0) {
+  // Filter checked scenarios and tracks, extracting just the ID strings
+  const selectedScenarios = variable.scenario
+    .filter((c: any) => c.checked)
+    .map((l: any) => l.id)
+    .filter((id: string) => {
+      if (!isValidUUID(id)) {
+        console.error(`Invalid scenario UUID: ${id}`);
+        return false;
+      }
+      return true;
+    });
+  
+  const selectedTracks = variable.track
+    .filter((c: any) => c.checked)
+    .map((l: any) => l.id)
+    .filter((id: string) => {
+      if (!isValidUUID(id)) {
+        console.error(`Invalid track UUID: ${id}`);
+        return false;
+      }
+      return true;
+    });
+  
+  console.log('Selected scenarios (validated):', selectedScenarios);
+  console.log('Selected tracks (validated):', selectedTracks);
+  
+  // Validate that we have valid data
+  if (selectedScenarios.length === 0) {
+    console.error('No valid scenarios selected or all scenario IDs are invalid UUIDs');
+    setVariable.setScenarioError(true);
+    return;
+  }
+  
+  if (selectedTracks.length === 0) {
+    console.error('No valid tracks selected or all track IDs are invalid UUIDs');
+    setVariable.setTrackError(true);
+    return;
+  }
+  
+  if (variable.title && variable.scenarioType && selectedScenarios.length != 0 && selectedTracks.length != 0) {
     createSimulation({
       variables: {
         simulationInput: {
@@ -163,8 +207,8 @@ export function launchSimulation(variable: any, createSimulation: Function, setV
           platform: variable.platform,
           scenarioType: variable.scenarioType,
           hardware: variable.hardware,
-          tracks: variable.track,
-          scenarios: variable.scenario,
+          tracks: selectedTracks,
+          scenarios: selectedScenarios,
           createdBy: "abc@t-systems.com"
         },
       },
@@ -182,8 +226,8 @@ export function onLaunchedSimulation(setSelectedscenario: Function, setSelectedt
     setToastMsg('Simulation has been launched successfully')
     setTimeout(() => {
       router.push('/dco/simulation')
-      setSelectedscenario([{ id: '1234', checked: false }])
-      setSelectedtrack([{ id: '5678', checked: false }])
+      setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }])
+      setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }])
     }, 2500)
 
   } else {
@@ -191,8 +235,8 @@ export function onLaunchedSimulation(setSelectedscenario: Function, setSelectedt
     setToastMsg(JSON.parse(JSON.stringify(res)).message)
     setTimeout(() => {
       router.push('/dco/simulation')
-      setSelectedscenario([{ id: '1234', checked: false }])
-      setSelectedtrack([{ id: '5678', checked: false }])
+      setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }])
+      setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }])
     }, 3000)
   }
 }
@@ -201,8 +245,8 @@ export function clearAll(setVariable: ClearAllTypes) {
   setVariable.setDescription('');
   setVariable.setEnvironment('');
   setVariable.setPlatform('');
-  setVariable.setSelectedscenario([{ id: '1234', checked: false }]);
-  setVariable.setSelectedtrack([{ id: '5678', checked: false }]);
+  setVariable.setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }]);
+  setVariable.setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }]);
   setVariable.setScenarioType('');
   setVariable.setHardware('');
   setVariable.setSearchval('');
@@ -216,3 +260,9 @@ export function onClickNewSimulation() {
     router.push('/dco/addSimulation')
   }, 0)
 }
+
+// UUID validation function
+const isValidUUID = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};

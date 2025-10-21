@@ -52,10 +52,20 @@ public class SimulationResultController {
    * Get all results for a simulation
    */
   @GetMapping("/{simulationId}/results")
-  public ResponseEntity<List<SimulationResultEntity>> getSimulationResults(@PathVariable UUID simulationId) {
-    LOGGER.info("Getting results for simulation {}", simulationId);
+  public ResponseEntity<List<SimulationResultEntity>> getAllSimulationResults(@PathVariable UUID simulationId) {
+    LOGGER.info("Getting all results for simulation {}", simulationId);
     List<SimulationResultEntity> results = simulationResultService.getResultsBySimulation(simulationId);
     return ResponseEntity.ok(results);
+  }
+
+  /**
+   * Get simulation result summary for a simulation
+   */
+  @GetMapping("/{simulationId}/result")
+  public ResponseEntity<SimulationResultEntity> getSimulationResultSummary(@PathVariable UUID simulationId) {
+    LOGGER.info("Getting result summary for simulation {}", simulationId);
+    SimulationResultEntity result = simulationResultService.getResultSummary(simulationId);
+    return ResponseEntity.ok(result);
   }
 
   /**

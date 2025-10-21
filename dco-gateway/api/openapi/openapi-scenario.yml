@@ -453,12 +453,10 @@ components:
           type: array
           items:
             type: string
-            format: uuid
         scenarios:
           type: array
           items:
             type: string
-            format: uuid
         createdBy:
           type: string
       description: launch simulation input

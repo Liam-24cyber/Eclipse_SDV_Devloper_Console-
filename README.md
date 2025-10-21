@@ -1,199 +1,71 @@
 # SDV Developer Console
 
-A comprehensive Software Defined Vehicle (SDV) Developer Console for managing simulation scenarios, tracks, simulations, and results analysis.
+This repository contains the SDV Developer Console UI and supporting services used to manage and inspect simulation runs.
 
-## 🚀 Features
+Key features
+- Results page: paginated, sortable table of simulations
+- Row actions: Results, View, Delete (confirmation + immediate UI update)
+- Demo status progression: new simulations show "Running" for 10s then transition to "Done"
+- Persistent deletion: deleted simulation IDs are stored in localStorage and filtered in the UI
 
-### Core Modules
-- **📋 Scenarios Management** - Create and manage vehicle testing scenarios
-- **🛣️ Tracks Management** - Design and configure test tracks
-- **⚡ Simulations** - Execute and monitor vehicle simulations
-- **📊 Results Analytics** - Comprehensive simulation results and analytics
+Prerequisites
+- macOS (instructions assume zsh)
+- Node.js (LTS recommended, e.g. 18+)
+- npm (bundled with Node)
+- Java JDK 11+ and Maven (for backend services)
+- Docker & Docker Compose (optional — for full-stack local run)
+- git
 
-### Key Capabilities
-- Real-time simulation monitoring
-- Comprehensive results analytics with performance metrics
-- Mock data system for development and testing
-- GraphQL API integration
-- File storage with MinIO S3 compatibility
-- PostgreSQL database with pgAdmin interface
-- Docker containerization for easy deployment
+Repository layout (top-level)
+- developer-console-ui/ — Next.js frontend application (TypeScript + React)
+- dco-gateway/, scenario-library-service/, tracks-management-service/, ... — backend services (Maven)
+- docker-compose.yml — optional full-stack compose for local testing
 
-## 🏗️ Architecture
+Quick start — Frontend only (dev)
+1. Open terminal (zsh)
+2. Install and run frontend:
+   - cd "developer-console-ui/app"
+   - npm ci
+   - npm run dev
+3. Open browser: http://localhost:3000
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    SDV Developer Console                    │
-├─────────────────────────────────────────────────────────────┤
-│  Frontend (Next.js)     │  Backend Services (Spring Boot)  │
-│  ├── Scenarios          │  ├── DCO Gateway (GraphQL)       │
-│  ├── Tracks             │  ├── Scenario Library Service    │
-│  ├── Simulations        │  ├── Tracks Management Service   │
-│  └── Results            │  └── Results Management API      │
-├─────────────────────────────────────────────────────────────┤
-│  Infrastructure & Storage                                   │
-│  ├── PostgreSQL Database                                   │
-│  ├── MinIO S3 Storage                                      │
-│  └── pgAdmin Database Management                           │
-└─────────────────────────────────────────────────────────────┘
-```
+Full stack (recommended for integration)
+1. Ensure Docker is running
+2. From repo root:
+   - docker compose up --build
+3. Wait for services to start, then open UI (usually http://localhost:3000)
 
-## 🛠️ Technology Stack
+Build & Production
+- Frontend build:
+  - cd developer-console-ui/app
+  - npm ci
+  - npm run build
+  - npm run start
+- Backend build (example):
+  - mvn -f dco-gateway/pom.xml clean package
 
-### Frontend
-- **Next.js 12** - React framework
-- **TypeScript** - Type-safe development
-- **Apollo Client** - GraphQL client
-- **SDV UI Components** - Custom UI library
+Configuration notes
+- GraphQL endpoint: the frontend uses `Link` defined in `developer-console-ui/app/libs/apollo`. Ensure it points to your gateway (GraphQL) service.
+- Auth: some calls read `token` from localStorage. For local testing you can set this value via the browser devtools or use the app login.
+- Deleted simulations: UI persists deleted IDs in localStorage key `deletedSimulations` (demo persistence). If you want server-side deletion, ensure the GraphQL mutation `deleteSimulation` is supported by your backend.
 
-### Backend
-- **Spring Boot** - Java backend framework
-- **GraphQL** - API query language
-- **PostgreSQL** - Primary database
-- **MinIO** - S3-compatible object storage
+Troubleshooting
+- Delete fails: confirm `Link` endpoint is reachable and that the GraphQL server supports `deleteSimulation`. Check browser console and gateway logs.
+- TypeScript/compile issues: cd developer-console-ui/app && npm ci && npm run build to show errors.
+- Tests failing: some unit tests may require specific mocks or package versions; run frontend tests with `npm test` from `developer-console-ui/app`.
 
-### DevOps
-- **Docker & Docker Compose** - Containerization
-- **Maven** - Java build tool
-- **npm** - Node.js package manager
+Development workflow
+- Branch from `develop-results-page` or `develop` for feature work
+- Commit messages: short subject + optional body (see examples used in repo)
+- Open PR describing changes and testing steps
 
-## 🚀 Quick Start
+Useful scripts
+- docker-compose.yml — start a local stack
+- 10-build-script.sh, 20-deploy-script.sh, 30-destroy-script.sh — helper scripts
 
-### Prerequisites
-- Docker and Docker Compose
-- Node.js 16+
-- Java 17+
-- Maven 3.8+
+License
+See LICENSE.md in repository root.
 
-### 1. Clone and Setup
-```bash
-git clone <your-repo-url>
-cd sdv-developer-console
-```
+Contact
+Open an issue in the repo for questions or assign to the repository owner for handover.
 
-### 2. Environment Configuration
-```bash
-# Configure MinIO credentials (if needed)
-# Edit minio/minio_keys.env
-MINIO_ROOT_USER=your_access_key
-MINIO_ROOT_PASSWORD=your_secret_key
-```
-
-### 3. Deploy with Docker
-```bash
-# Build and start all services
-docker-compose up -d --build
-
-# Or use the deployment script
-chmod +x 20-deploy-script.sh
-./20-deploy-script.sh your_access_key your_secret_key
-```
-
-### 4. Access Applications
-- **Developer Console UI**: http://localhost:3000
-- **GraphQL Playground**: http://localhost:8080/playground
-- **Scenario Library API**: http://localhost:8082/openapi/swagger-ui/index.html
-- **Tracks Management API**: http://localhost:8081/openapi/swagger-ui/index.html
-- **Database Admin (pgAdmin)**: http://localhost:5050
-- **MinIO Console**: http://localhost:9001
-
-## 📊 Mock Data System
-
-The application includes a comprehensive mock data system for development and testing:
-
-### Configuration
-Each service has configurable mock data in `/services/mockData/`:
-```typescript
-export const MOCK_CONFIG = {
-  USE_MOCK_DATA: true,  // Toggle mock vs real data
-  MOCK_DELAY: 500,      // Simulate network delay
-  ENABLE_PAGINATION: true
-}
-```
-
-### Available Mock Data
-- **15 Scenarios** - Various testing scenarios (Performance, Safety, Traffic, etc.)
-- **12 Tracks** - Different track types (Highway, Urban, Off-road, Weather)
-- **8 Simulations** - Running simulations with various statuses
-- **10 Results** - Completed results with comprehensive analytics
-
-## 🔧 Development
-
-### Frontend Development
-```bash
-cd developer-console-ui/app
-npm install
-npm run dev
-```
-
-### Backend Development
-```bash
-# Build individual services
-cd dco-gateway && mvn clean install
-cd scenario-library-service && mvn clean install
-cd tracks-management-service && mvn clean install
-```
-
-### Database Management
-- **Database**: `dco_db`
-- **Username/Password**: `postgres/postgres`
-- **pgAdmin**: admin@default.com / admin
-
-## 📁 Project Structure
-
-```
-├── developer-console-ui/          # Next.js Frontend
-│   ├── app/                      # Main application
-│   ├── components/               # React components
-│   ├── services/                 # API services & mock data
-│   └── pages/                    # Next.js pages
-├── dco-gateway/                  # GraphQL Gateway Service
-├── scenario-library-service/     # Scenarios Management API
-├── tracks-management-service/    # Tracks Management API
-├── postgres/                     # Database initialization
-├── minio/                        # Object storage configuration
-└── docker-compose.yml           # Container orchestration
-```
-
-## 🎯 Key Features
-
-### Results Analytics Dashboard
-- Performance metrics (speed, efficiency, safety scores)
-- Simulation execution tracking
-- Comprehensive data visualization
-- Export capabilities for further analysis
-
-### Mock Data Architecture
-- Easily switchable between mock and real data
-- Realistic test data for all modules
-- Configurable delays and pagination
-- Development-friendly setup
-
-### Container-First Design
-- All services containerized with Docker
-- One-command deployment
-- Environment-specific configurations
-- Scalable architecture
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-## 🆘 Support
-
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the [Wiki](../../wiki) for detailed documentation
-- Review the API documentation at runtime endpoints
-
----
-
-**Built with ❤️ for the Eclipse SDV Community**

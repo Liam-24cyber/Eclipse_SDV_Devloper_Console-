@@ -94,6 +94,30 @@ public class SimulationResultServiceImpl implements SimulationResultService {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public SimulationResultEntity getResultSummary(UUID simulationId) {
+    LOGGER.info("Getting result summary for simulation {}", simulationId);
+    
+    // Try to get the summary result first
+    List<SimulationResultEntity> summaryResults = resultRepository.findBySimulationIdAndResultType(
+      simulationId, SimulationResultEntity.ResultType.SUMMARY);
+    
+    if (!summaryResults.isEmpty()) {
+      return summaryResults.get(0);
+    }
+    
+    // If no summary exists, create a default one
+    SimulationResultEntity defaultResult = SimulationResultEntity.builder()
+      .simulationId(simulationId)
+      .resultType(SimulationResultEntity.ResultType.SUMMARY)
+      .title("Simulation Result Summary")
+      .content("Simulation execution details")
+      .build();
+    
+    return resultRepository.save(defaultResult);
+  }
+
+  @Override
   public void deleteResult(UUID resultId) {
     LOGGER.info("Deleting result with id {}", resultId);
     resultRepository.deleteById(resultId);

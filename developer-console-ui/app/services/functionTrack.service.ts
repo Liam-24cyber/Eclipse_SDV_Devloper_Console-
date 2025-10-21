@@ -25,27 +25,66 @@ export const trackRowData = (rawData: RawDataTrackType) =>
     }
   })
 export const getTrackData = async (pageNo: any, searchval: any) => {
-  if (searchval != '') {
-    pageNo = 1
-  }
-  const token = localStorage.getItem('token');
-  return fetch(Link, {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'content-type': 'application/json',
-      'Authorization': token ? `Basic ${token}` : "",
+  // Mock track data with real UUIDs from database
+  const mockTracks = [
+    {
+      id: 'a633a44b-0df6-43c5-9250-aaca94191054',
+      name: 'Test Track 1',
+      state: 'ACTIVE',
+      trackType: 'Urban',
+      vehicles: [
+        { id: 'v1', country: 'Germany', type: 'Sedan' },
+        { id: 'v2', country: 'Germany', type: 'SUV' },
+        { id: 'v3', country: 'France', type: 'Truck' },
+      ]
     },
-    body: JSON.stringify({
-      query: LIST_TRACKS,
-      variables: { trackPattern: searchval, page: pageNo - 1, size: 10 },
-    }),
+    {
+      id: '12417b96-1468-4596-b96b-0bfb896d834e',
+      name: 'Highway Track',
+      state: 'ACTIVE',
+      trackType: 'Highway',
+      vehicles: [
+        { id: 'v4', country: 'USA', type: 'Sedan' },
+        { id: 'v5', country: 'USA', type: 'Electric' },
+      ]
+    },
+    {
+      id: '859894e1-29b1-44d1-8793-f154136039e0',
+      name: 'City Center Track',
+      state: 'ACTIVE',
+      trackType: 'Urban',
+      vehicles: [
+        { id: 'v6', country: 'Switzerland', type: 'SUV' },
+        { id: 'v7', country: 'Italy', type: 'Sedan' },
+        { id: 'v8', country: 'Austria', type: 'Van' },
+      ]
+    },
+  ]
+
+  // Filter by search value
+  const filteredTracks = searchval 
+    ? mockTracks.filter(t => 
+        t.name.toLowerCase().includes(searchval.toLowerCase()) ||
+        t.trackType.toLowerCase().includes(searchval.toLowerCase())
+      )
+    : mockTracks
+
+  // Pagination
+  const pageSize = 10
+  const startIndex = (pageNo - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedTracks = filteredTracks.slice(startIndex, endIndex)
+
+  // Return mock response
+  return Promise.resolve({
+    data: {
+      searchTrackByPattern: {
+        content: paginatedTracks,
+        pages: Math.ceil(filteredTracks.length / pageSize),
+        total: filteredTracks.length,
+      }
+    }
   })
-    .then((res) => res.json())
-    .then((result) => result)
-    .catch((error) => {
-      console.log('Error fetching data:::', error.message)
-    })
 }
 //  track tab data end****
 export function Selectedtrack() {

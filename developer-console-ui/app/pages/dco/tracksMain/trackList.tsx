@@ -43,14 +43,20 @@ const TrackList = ({ path }: any) => {
                         } else { return false }
                     })}
                     onChange={(e: any, val: any) => {
-                        theArray.map((v: any) => {
+                        let updated = false;
+                        const updatedArray = theArray.map((v: any) => {
                             if (v?.id == cell.row.values.trackID) {
-                                v.checked = e.target.checked
-                            } else {
-                                theArray.push({ id: cell.row.values.trackID, checked: e.target.checked })
+                                updated = true;
+                                return { ...v, checked: e.target.checked };
                             }
-                        })
-                        let newArr = [...new Map(theArray.map((s: any) => [s['id'], s])).values()]
+                            return v;
+                        });
+                        
+                        if (!updated) {
+                            updatedArray.push({ id: cell.row.values.trackID, checked: e.target.checked });
+                        }
+                        
+                        let newArr = [...new Map(updatedArray.map((s: any) => [s['id'], s])).values()]
                         setSelectedtrack(newArr)
                     }}
                 />)

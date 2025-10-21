@@ -36,8 +36,6 @@ import com.tsystems.dco.simulation.entity.SimulationResultEntity;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -154,9 +152,18 @@ public class CampaignService {
    */
   @SneakyThrows
   private String getMockedCampaignStatus() {
-    List<String> mockedStatuses = Arrays.asList("Pending", "Running", "Done", "Error", "Timeout");
+    // Simulate a more realistic progression instead of random status
+    // For now, simulate that campaigns progress: Pending -> Running -> Done (with some randomness)
     var random = new SecureRandom();
-    var index = random.nextInt(mockedStatuses.size());
-    return mockedStatuses.get(index);
+    int progressChance = random.nextInt(100);
+    
+    // 70% chance to complete successfully, 20% still running, 10% error
+    if (progressChance < 70) {
+      return "Done";
+    } else if (progressChance < 90) {
+      return "Running"; 
+    } else {
+      return "Error";
+    }
   }
 }

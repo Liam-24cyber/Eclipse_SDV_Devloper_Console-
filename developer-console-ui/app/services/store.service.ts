@@ -26,11 +26,11 @@ export const store = createStore(persist({
   setPage: action((state: any, payload: any) => {
     state.setPage = payload;
   }),
-  selectedscenario: [{id:'1234',checked:false}],
+  selectedscenario: [{id:'93b866de-a642-4543-886c-a3597dbe9d8f',checked:false}],
   setSelectedscenario: action((state: any, payload: any) => {
       state.selectedscenario = payload;
   }),
-  selectedtrack: [{id:'5678',checked:false}],
+  selectedtrack: [{id:'a633a44b-0df6-43c5-9250-aaca94191054',checked:false}],
   setSelectedtrack: action((state: any, payload: any) => {
       state.selectedtrack = payload;
   }),

@@ -74,6 +74,12 @@ public class SimulationRestClient implements SimulationClient {
   }
 
   @Override
+  public List<SimulationResult> getAllSimulationResults(UUID simulationId) {
+    ResponseEntity<List<SimulationResult>> responseEntity = client.getAllSimulationResults(simulationId);
+    return responseEntity.getBody();
+  }
+
+  @Override
   public List<SimulationLog> getSimulationLogs(UUID simulationId) {
     ResponseEntity<List<SimulationLog>> responseEntity = client.getSimulationLogs(simulationId);
     return responseEntity.getBody();

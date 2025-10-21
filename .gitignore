@@ -1,1 +1,63 @@
-.m2
+# Build artifacts
+*.class
+*.jar
+!gradle-wrapper.jar
+*.war
+*.ear
+target/
+build/
+out/
+.gradle/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+.next/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.backup
+*.backup.*
+*.bak
+*.old
+*_backup.*
+*.clean.*
+*.simple.*
+
+# Test files
+*.test.js
+*.test.ts
+test-*.sh
+insert-*.sql
+sample-*/
+
+# Documentation drafts
+*-NEW.md
+*_IMPLEMENTATION_GUIDE.md
+*_QUICK_START.md
+*_SUMMARY.md
+*_COMPLETE_SETUP.md
+*_FIX.md
+*_REPORT.md
+SETUP_GUIDE.md
