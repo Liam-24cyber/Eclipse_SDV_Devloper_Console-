@@ -1,6 +1,6 @@
 import { Box, Table } from '@dco/sdv-ui'
 import { useStoreActions } from 'easy-peasy'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Dco from '..'
 import { getResultsData, resultsRowData } from '../../../services/functionResults.service'
@@ -13,6 +13,7 @@ const Results = () => {
   const setCount = useStoreActions((actions: any) => actions.setCount)
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
+  const [forceRender, setForceRender] = useState(0) // Add force render state
   const [pageData, setPageData] = useState({
     rowData: [],
     isLoading: false,
@@ -20,17 +21,20 @@ const Results = () => {
     totalResults: 0,
   })
 
+  // Memoize the table data to ensure proper re-rendering
+  const tableData = useMemo(() => {
+    // Create a deep copy to ensure the reference changes
+    return pageData.rowData.map((row: any) => ({ ...row }))
+  }, [pageData.rowData])
+
   useEffect(() => {
-    console.log('🚀 Results page useEffect triggered, currentPage:', currentPage)
     setPageData((prevState) => ({
       ...prevState,
       rowData: [],
       isLoading: true,
     }))
     
-    console.log('📞 About to call getResultsData...')
     getResultsData(currentPage).then((info) => {
-      console.log('✅ getResultsData response:', info)
       setPageData({
         isLoading: false,
         rowData: resultsRowData(info) as any,
@@ -39,13 +43,12 @@ const Results = () => {
       })
       setCount(info?.data?.simulationReadByQuery?.total || 0);
     }).catch((error) => {
-      console.error('❌ Error loading results:', error);
       setPageData((prevState) => ({
         ...prevState,
         isLoading: false,
       }))
     })
-  }, [currentPage, setCount])
+  }, [currentPage])
 
   const handleViewResults = (simulationId: string) => {
     router.push(`/dco/simulation/results/${simulationId}`)
@@ -53,6 +56,40 @@ const Results = () => {
 
   const handleViewSimulation = (simulationId: string) => {
     router.push(`/dco/simulation/${simulationId}`)
+  }
+
+  const handleDeleteSimulation = (simulationId: string, simulationName: string) => {
+
+    
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${simulationName}"?`
+    )
+    
+    if (confirmDelete) {
+
+      console.log('� Current rowData before filter:', pageData.rowData);
+      
+      // Update the page data immediately
+      setPageData((prevState) => {
+        const filteredData = prevState.rowData.filter((row: any) => {
+          return row.id !== simulationId; // Keep rows that DON'T match the ID to delete
+        });
+        
+        return {
+          ...prevState,
+          rowData: filteredData,
+          totalResults: Math.max(0, prevState.totalResults - 1)
+        };
+      });
+      
+      // Update count
+      setCount((prev: number) => Math.max(0, prev - 1));
+      
+      // Force a re-render of the table
+      setForceRender(prev => prev + 1);
+      
+
+    }
   }
 
   const columns = [
@@ -90,8 +127,10 @@ const Results = () => {
       accessor: 'actions',
       formatter: (value: any, cell: any) => {
         const simulationId = cell?.row?.values?.id || cell?.row?.original?.id
+        const simulationName = cell?.row?.values?.name || cell?.row?.original?.name || 'Unknown Simulation'
+        
         return (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             <button
               onClick={() => handleViewResults(simulationId)}
               style={{
@@ -136,6 +175,28 @@ const Results = () => {
             >
               View
             </button>
+            <button
+              onClick={() => handleDeleteSimulation(simulationId, simulationName)}
+              style={{
+                background: '#dc3545',
+                color: 'white',
+                border: 'none',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontSize: '11px'
+              }}
+              onMouseOver={(e) => {
+                const target = e.target as HTMLButtonElement
+                target.style.background = '#c82333'
+              }}
+              onMouseOut={(e) => {
+                const target = e.target as HTMLButtonElement
+                target.style.background = '#dc3545'
+              }}
+            >
+              Delete
+            </button>
           </div>
         )
       }
@@ -152,8 +213,9 @@ const Results = () => {
         <>
           {/* @ts-ignore */}
           <Table 
+            key={`table-${tableData.length}-${forceRender}`}
             columns={columns}
-            data={pageData.rowData}
+            data={tableData}
           />
           <Box align='right' padding='small'>
             <Pagination 
