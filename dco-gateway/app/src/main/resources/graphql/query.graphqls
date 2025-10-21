@@ -10,7 +10,8 @@ type Query {
   getVehicleByVin(vin: String): VehicleResponse
   
   # Simulation Results Queries
-  getSimulationResults(simulationId: ID!): [SimulationResult]
+  getSimulationResults(simulationId: ID!): SimulationResult
+  getAllSimulationResults(simulationId: ID!): [SimulationResult]
   getSimulationResultsByType(simulationId: ID!, resultType: ResultTypeEnum!): [SimulationResult]
   getSimulationLogs(simulationId: ID!, page: Int, size: Int): SimulationLogPage
   getSimulationLogsByLevel(simulationId: ID!, logLevel: LogLevelEnum!): [SimulationLog]

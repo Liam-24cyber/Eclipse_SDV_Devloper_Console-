@@ -78,12 +78,15 @@ public interface ScenarioFeignClient {
                                                        @RequestParam(value = "size") Integer size,
                                                        @RequestParam(value = "sort") List<String> sort);
 
-  @GetMapping(value = "/api/simulation/results/{simulationId}", produces = {"application/json"})
+  @GetMapping(value = "/api/simulation/{simulationId}/result", produces = {"application/json"})
   ResponseEntity<SimulationResult> getSimulationResults(@PathVariable(value = "simulationId") UUID simulationId);
 
-  @GetMapping(value = "/api/simulation/logs/{simulationId}", produces = {"application/json"})
+  @GetMapping(value = "/api/simulation/{simulationId}/results", produces = {"application/json"})
+  ResponseEntity<List<SimulationResult>> getAllSimulationResults(@PathVariable(value = "simulationId") UUID simulationId);
+
+  @GetMapping(value = "/api/simulation/{simulationId}/logs", produces = {"application/json"})
   ResponseEntity<List<SimulationLog>> getSimulationLogs(@PathVariable(value = "simulationId") UUID simulationId);
 
-  @GetMapping(value = "/api/simulation/metrics/{simulationId}", produces = {"application/json"})
+  @GetMapping(value = "/api/simulation/{simulationId}/metrics", produces = {"application/json"})
   ResponseEntity<List<SimulationMetric>> getSimulationMetrics(@PathVariable(value = "simulationId") UUID simulationId);
 }

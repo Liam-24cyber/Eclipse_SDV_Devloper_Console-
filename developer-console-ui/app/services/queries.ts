@@ -222,15 +222,21 @@ export const GET_SIMULATION_RESULTS = gql`
 `
 
 export const GET_SIMULATION_LOGS = gql`
-  query GET_SIMULATION_LOGS($simulationId: ID!) {
-    getSimulationLogs(simulationId: $simulationId) {
-      id
-      simulationId
-      logLevel
-      component
-      message
-      timestamp
-      additionalData
+  query GET_SIMULATION_LOGS($simulationId: ID!, $page: Int, $size: Int) {
+    getSimulationLogs(simulationId: $simulationId, page: $page, size: $size) {
+      content {
+        id
+        simulationId
+        logLevel
+        component
+        message
+        timestamp
+        additionalData
+      }
+      totalElements
+      totalPages
+      size
+      page
     }
   }
 `

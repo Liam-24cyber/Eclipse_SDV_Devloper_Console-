@@ -39,6 +39,8 @@ public interface SimulationClient {
   
   SimulationResult getSimulationResults(UUID simulationId);
   
+  List<SimulationResult> getAllSimulationResults(UUID simulationId);
+  
   List<SimulationLog> getSimulationLogs(UUID simulationId);
   
   List<SimulationMetric> getSimulationMetrics(UUID simulationId);

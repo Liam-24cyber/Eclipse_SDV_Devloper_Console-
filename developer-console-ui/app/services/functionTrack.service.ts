@@ -25,13 +25,13 @@ export const trackRowData = (rawData: RawDataTrackType) =>
     }
   })
 export const getTrackData = async (pageNo: any, searchval: any) => {
-  // Mock track data
+  // Mock track data with real UUIDs from database
   const mockTracks = [
     {
-      id: 'track-1',
-      name: 'Autobahn Highway A5',
+      id: 'a633a44b-0df6-43c5-9250-aaca94191054',
+      name: 'Test Track 1',
       state: 'ACTIVE',
-      trackType: 'Highway',
+      trackType: 'Urban',
       vehicles: [
         { id: 'v1', country: 'Germany', type: 'Sedan' },
         { id: 'v2', country: 'Germany', type: 'SUV' },
@@ -39,46 +39,24 @@ export const getTrackData = async (pageNo: any, searchval: any) => {
       ]
     },
     {
-      id: 'track-2',
-      name: 'City Downtown Circuit',
+      id: '12417b96-1468-4596-b96b-0bfb896d834e',
+      name: 'Highway Track',
       state: 'ACTIVE',
-      trackType: 'Urban',
+      trackType: 'Highway',
       vehicles: [
         { id: 'v4', country: 'USA', type: 'Sedan' },
         { id: 'v5', country: 'USA', type: 'Electric' },
       ]
     },
     {
-      id: 'track-3',
-      name: 'Mountain Pass Route',
+      id: '859894e1-29b1-44d1-8793-f154136039e0',
+      name: 'City Center Track',
       state: 'ACTIVE',
-      trackType: 'Mountain',
+      trackType: 'Urban',
       vehicles: [
         { id: 'v6', country: 'Switzerland', type: 'SUV' },
         { id: 'v7', country: 'Italy', type: 'Sedan' },
         { id: 'v8', country: 'Austria', type: 'Van' },
-      ]
-    },
-    {
-      id: 'track-4',
-      name: 'Suburban Test Track',
-      state: 'ACTIVE',
-      trackType: 'Suburban',
-      vehicles: [
-        { id: 'v9', country: 'Japan', type: 'Hybrid' },
-        { id: 'v10', country: 'Japan', type: 'Electric' },
-      ]
-    },
-    {
-      id: 'track-5',
-      name: 'Racing Circuit Nürburgring',
-      state: 'ACTIVE',
-      trackType: 'Circuit',
-      vehicles: [
-        { id: 'v11', country: 'Germany', type: 'Sports' },
-        { id: 'v12', country: 'UK', type: 'Sports' },
-        { id: 'v13', country: 'Italy', type: 'Sports' },
-        { id: 'v14', country: 'USA', type: 'Sports' },
       ]
     },
   ]

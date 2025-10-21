@@ -57,6 +57,15 @@ public class SimulationController implements SimulationApi {
   @Override
   public ResponseEntity<String> launchSimulation(SimulationInput simulationInput) {
     LOGGER.info("Launching Simulation - {}", simulationInput);
+    
+    // Log track and scenario IDs for debugging
+    if (simulationInput.getTracks() != null) {
+      LOGGER.info("Track IDs: {}", simulationInput.getTracks());
+    }
+    if (simulationInput.getScenarios() != null) {
+      LOGGER.info("Scenario IDs: {}", simulationInput.getScenarios());
+    }
+    
     return ResponseEntity
       .status(HttpStatus.CREATED)
       .body(simulationService.launchSimulation(simulationInput));

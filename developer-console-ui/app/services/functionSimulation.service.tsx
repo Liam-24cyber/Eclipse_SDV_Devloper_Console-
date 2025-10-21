@@ -155,10 +155,40 @@ export function launchSimulation(variable: any, createSimulation: Function, setV
   const selectedScenarios = variable.scenario
     .filter((c: any) => c.checked)
     .map((l: any) => l.id)
+    .filter((id: string) => {
+      if (!isValidUUID(id)) {
+        console.error(`Invalid scenario UUID: ${id}`);
+        return false;
+      }
+      return true;
+    });
   
   const selectedTracks = variable.track
     .filter((c: any) => c.checked)
     .map((l: any) => l.id)
+    .filter((id: string) => {
+      if (!isValidUUID(id)) {
+        console.error(`Invalid track UUID: ${id}`);
+        return false;
+      }
+      return true;
+    });
+  
+  console.log('Selected scenarios (validated):', selectedScenarios);
+  console.log('Selected tracks (validated):', selectedTracks);
+  
+  // Validate that we have valid data
+  if (selectedScenarios.length === 0) {
+    console.error('No valid scenarios selected or all scenario IDs are invalid UUIDs');
+    setVariable.setScenarioError(true);
+    return;
+  }
+  
+  if (selectedTracks.length === 0) {
+    console.error('No valid tracks selected or all track IDs are invalid UUIDs');
+    setVariable.setTrackError(true);
+    return;
+  }
   
   if (variable.title && variable.scenarioType && selectedScenarios.length != 0 && selectedTracks.length != 0) {
     createSimulation({
@@ -189,8 +219,8 @@ export function onLaunchedSimulation(setSelectedscenario: Function, setSelectedt
     setToastMsg('Simulation has been launched successfully')
     setTimeout(() => {
       router.push('/dco/simulation')
-      setSelectedscenario([{ id: '1234', checked: false }])
-      setSelectedtrack([{ id: '5678', checked: false }])
+      setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }])
+      setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }])
     }, 2500)
 
   } else {
@@ -198,8 +228,8 @@ export function onLaunchedSimulation(setSelectedscenario: Function, setSelectedt
     setToastMsg(JSON.parse(JSON.stringify(res)).message)
     setTimeout(() => {
       router.push('/dco/simulation')
-      setSelectedscenario([{ id: '1234', checked: false }])
-      setSelectedtrack([{ id: '5678', checked: false }])
+      setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }])
+      setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }])
     }, 3000)
   }
 }
@@ -208,8 +238,8 @@ export function clearAll(setVariable: ClearAllTypes) {
   setVariable.setDescription('');
   setVariable.setEnvironment('');
   setVariable.setPlatform('');
-  setVariable.setSelectedscenario([{ id: '1234', checked: false }]);
-  setVariable.setSelectedtrack([{ id: '5678', checked: false }]);
+  setVariable.setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }]);
+  setVariable.setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }]);
   setVariable.setScenarioType('');
   setVariable.setHardware('');
   setVariable.setSearchval('');
@@ -223,3 +253,9 @@ export function onClickNewSimulation() {
     router.push('/dco/addSimulation')
   }, 0)
 }
+
+// UUID validation function
+const isValidUUID = (id: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(id);
+};

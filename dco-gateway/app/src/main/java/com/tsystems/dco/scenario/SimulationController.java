@@ -84,6 +84,16 @@ public class SimulationController {
 
   /**
    * @param simulationId
+   * @return List<SimulationResult>
+   */
+  @QueryMapping
+  public List<SimulationResult> getAllSimulationResults(@Argument UUID simulationId) {
+    LOGGER.info("Getting all simulation results for simulationId: {}", simulationId);
+    return simulationClient.getAllSimulationResults(simulationId);
+  }
+
+  /**
+   * @param simulationId
    * @return List<SimulationLog>
    */
   @QueryMapping

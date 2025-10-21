@@ -21,33 +21,33 @@ export const libRowData = (rawData: any) =>
     }
   })
 export const getLibData = async (pageNo: any, searchval: any) => {
-  // Mock scenario data
+  // Mock scenario data with real UUIDs from database
   const mockScenarios = [
     {
-      id: '1',
-      name: 'Highway Overtaking Scenario',
-      type: 'MQTT',
-      file: { path: '/scenarios/highway_overtaking.odx' },
-      createdBy: 'admin',
-      description: 'Highway overtaking maneuver testing with multiple vehicles',
+      id: '93b866de-a642-4543-886c-a3597dbe9d8f',
+      name: 'Basic Lane Change',
+      type: 'lane_change',
+      file: { path: '/scenarios/basic_lane_change.odx' },
+      createdBy: 'system',
+      description: 'Simple lane change scenario',
       lastModifiedAt: new Date().toISOString(),
     },
     {
-      id: '2',
-      name: 'Emergency Collision Avoidance',
-      type: 'MQTT',
-      file: { path: '/scenarios/emergency_collision_avoidance.txt' },
-      createdBy: 'test_user',
-      description: 'Tests autonomous emergency braking system',
+      id: '0069e772-957c-43d2-84dd-45abd30214d5',
+      name: 'Emergency Braking',
+      type: 'emergency',
+      file: { path: '/scenarios/emergency_braking.txt' },
+      createdBy: 'system',
+      description: 'Emergency braking test scenario',
       lastModifiedAt: new Date(Date.now() - 86400000).toISOString(),
     },
     {
-      id: '3',
-      name: 'Urban Intersection Navigation',
-      type: 'CAN',
-      file: { path: '/scenarios/urban_intersection_navigation.txt' },
-      createdBy: 'admin',
-      description: 'Intersection crossing with V2X communication',
+      id: '848b8ea7-cb2d-4fda-a617-7d6a79d526a7',
+      name: 'Intersection Navigation',
+      type: 'intersection',
+      file: { path: '/scenarios/intersection_navigation.txt' },
+      createdBy: 'system',
+      description: 'Complex intersection scenario',
       lastModifiedAt: new Date(Date.now() - 172800000).toISOString(),
     },
     {

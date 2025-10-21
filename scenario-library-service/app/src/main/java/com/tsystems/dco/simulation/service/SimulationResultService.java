@@ -46,6 +46,8 @@ public interface SimulationResultService {
   
   SimulationResultEntity getResultById(UUID resultId);
   
+  SimulationResultEntity getResultSummary(UUID simulationId);
+  
   void deleteResult(UUID resultId);
 
   // Log management
