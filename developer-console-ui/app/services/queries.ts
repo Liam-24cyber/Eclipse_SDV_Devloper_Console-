@@ -200,6 +200,12 @@ export const LAUNCH_SIMULATION = gql`
     launchSimulation(simulationInput: $simulationInput)
   }
 `
+
+export const DELETE_SIMULATION = gql`
+  mutation DELETE_SIMULATION($simulationId: ID!) {
+    deleteSimulation(simulationId: $simulationId)
+  }
+`
 export const HARDWARE_MODULE = gql`
   query GET_HARDWARE_MODULE {
     getHardwareModule
