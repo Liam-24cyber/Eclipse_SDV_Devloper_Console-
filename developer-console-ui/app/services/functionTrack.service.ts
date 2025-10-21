@@ -25,27 +25,88 @@ export const trackRowData = (rawData: RawDataTrackType) =>
     }
   })
 export const getTrackData = async (pageNo: any, searchval: any) => {
-  if (searchval != '') {
-    pageNo = 1
-  }
-  const token = localStorage.getItem('token');
-  return fetch(Link, {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'content-type': 'application/json',
-      'Authorization': token ? `Basic ${token}` : "",
+  // Mock track data
+  const mockTracks = [
+    {
+      id: 'track-1',
+      name: 'Autobahn Highway A5',
+      state: 'ACTIVE',
+      trackType: 'Highway',
+      vehicles: [
+        { id: 'v1', country: 'Germany', type: 'Sedan' },
+        { id: 'v2', country: 'Germany', type: 'SUV' },
+        { id: 'v3', country: 'France', type: 'Truck' },
+      ]
     },
-    body: JSON.stringify({
-      query: LIST_TRACKS,
-      variables: { trackPattern: searchval, page: pageNo - 1, size: 10 },
-    }),
+    {
+      id: 'track-2',
+      name: 'City Downtown Circuit',
+      state: 'ACTIVE',
+      trackType: 'Urban',
+      vehicles: [
+        { id: 'v4', country: 'USA', type: 'Sedan' },
+        { id: 'v5', country: 'USA', type: 'Electric' },
+      ]
+    },
+    {
+      id: 'track-3',
+      name: 'Mountain Pass Route',
+      state: 'ACTIVE',
+      trackType: 'Mountain',
+      vehicles: [
+        { id: 'v6', country: 'Switzerland', type: 'SUV' },
+        { id: 'v7', country: 'Italy', type: 'Sedan' },
+        { id: 'v8', country: 'Austria', type: 'Van' },
+      ]
+    },
+    {
+      id: 'track-4',
+      name: 'Suburban Test Track',
+      state: 'ACTIVE',
+      trackType: 'Suburban',
+      vehicles: [
+        { id: 'v9', country: 'Japan', type: 'Hybrid' },
+        { id: 'v10', country: 'Japan', type: 'Electric' },
+      ]
+    },
+    {
+      id: 'track-5',
+      name: 'Racing Circuit Nürburgring',
+      state: 'ACTIVE',
+      trackType: 'Circuit',
+      vehicles: [
+        { id: 'v11', country: 'Germany', type: 'Sports' },
+        { id: 'v12', country: 'UK', type: 'Sports' },
+        { id: 'v13', country: 'Italy', type: 'Sports' },
+        { id: 'v14', country: 'USA', type: 'Sports' },
+      ]
+    },
+  ]
+
+  // Filter by search value
+  const filteredTracks = searchval 
+    ? mockTracks.filter(t => 
+        t.name.toLowerCase().includes(searchval.toLowerCase()) ||
+        t.trackType.toLowerCase().includes(searchval.toLowerCase())
+      )
+    : mockTracks
+
+  // Pagination
+  const pageSize = 10
+  const startIndex = (pageNo - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const paginatedTracks = filteredTracks.slice(startIndex, endIndex)
+
+  // Return mock response
+  return Promise.resolve({
+    data: {
+      searchTrackByPattern: {
+        content: paginatedTracks,
+        pages: Math.ceil(filteredTracks.length / pageSize),
+        total: filteredTracks.length,
+      }
+    }
   })
-    .then((res) => res.json())
-    .then((result) => result)
-    .catch((error) => {
-      console.log('Error fetching data:::', error.message)
-    })
 }
 //  track tab data end****
 export function Selectedtrack() {

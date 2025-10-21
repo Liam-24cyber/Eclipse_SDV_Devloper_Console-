@@ -10,6 +10,7 @@ import {
 } from './mockData/results.mock'
 
 // GraphQL query for getting simulation results
+// Updated to match backend schema: noOfVehicle, noOfScenarios, executionDuration, resultSummary
 const SIMULATION_RESULTS_QUERY = gql`
   query simulationReadByQuery($page: Int, $size: Int) {
     simulationReadByQuery(page: $page, size: $size) {
@@ -20,28 +21,17 @@ const SIMULATION_RESULTS_QUERY = gql`
         platform
         environment
         scenarioType
-        vehicles
-        scenarios
+        hardware
+        noOfVehicle
+        noOfScenarios
+        brands
+        description
+        createdBy
         startDate
         endDate
-        results {
-          averageSpeed
-          maxSpeed
-          fuelEfficiency
-          safetyScore
-          brakingDistance
-          reactionTime
-          collisionAvoidance
-          averageWaitTime
-          throughput
-          congestionLevel
-          successRate
-          averageParkingTime
-          collisions
-          successfulLaneChanges
-          averageChangeTime
-          smoothnessScore
-        }
+        executionDuration
+        resultSummary
+        errorMessage
       }
       pages
       total
@@ -121,6 +111,7 @@ export const getResultsData = async (page: number = 1, size: number = 10) => {
 }
 
 // Function to transform results data for table display
+// Updated to use correct backend field names: noOfVehicle, noOfScenarios
 export const resultsRowData = (data: any) => {
   if (!data?.data?.simulationReadByQuery?.content) {
     return []
@@ -128,15 +119,24 @@ export const resultsRowData = (data: any) => {
 
   return data.data.simulationReadByQuery.content.map((simulation: any) => ({
     id: simulation.id,
+    name: simulation.name, // Fixed: was simulationName
     simulationName: simulation.name,
     status: simulation.status,
     platform: simulation.platform,
     environment: simulation.environment,
     scenarioType: simulation.scenarioType,
-    vehicles: simulation.vehicles,
-    scenarios: simulation.scenarios,
+    vehicles: simulation.noOfVehicle || 0, // Fixed: backend uses noOfVehicle
+    scenarios: simulation.noOfScenarios || 0, // Fixed: backend uses noOfScenarios
+    hardware: simulation.hardware,
+    brands: simulation.brands || [],
+    description: simulation.description,
+    createdBy: simulation.createdBy,
     startDate: simulation.startDate ? new Date(simulation.startDate).toLocaleDateString() : '-',
     endDate: simulation.endDate ? new Date(simulation.endDate).toLocaleDateString() : '-',
+    executionDuration: simulation.executionDuration || 0,
+    resultSummary: simulation.resultSummary,
+    errorMessage: simulation.errorMessage,
+    // Keep results for backward compatibility (will be undefined from real API)
     results: simulation.results
   }))
 }

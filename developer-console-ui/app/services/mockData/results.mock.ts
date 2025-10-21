@@ -7,8 +7,8 @@
 // You can easily switch between mock and real data by importing from here
 
 export const MOCK_CONFIG = {
-  USE_MOCK_DATA: true,  // Toggle mock vs real data
-  MOCK_DELAY: 800,      // Simulate network delay for results
+  USE_MOCK_DATA: false,  // Toggle mock vs real data - CHANGED TO USE REAL API
+  MOCK_DELAY: 800,       // Simulate network delay for results
   ENABLE_PAGINATION: true
 }
 

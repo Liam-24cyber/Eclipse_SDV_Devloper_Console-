@@ -151,9 +151,16 @@ export const getSimData = async (pageNo: number) => {
 //  Simulation data end****
 
 export function launchSimulation(variable: any, createSimulation: Function, setVariable: any) {
-  variable.scenario = variable.scenario.filter((c: any) => { if (c.checked) { return c.id } }).map((l: any) => l.id)
-  variable.track = variable.track.filter((c: any) => { if (c.checked) { return c.id } }).map((l: any) => l.id)
-  if (variable.title && variable.scenarioType && variable.scenario.length != 0 && variable.track.length != 0) {
+  // Filter checked scenarios and tracks, extracting just the ID strings
+  const selectedScenarios = variable.scenario
+    .filter((c: any) => c.checked)
+    .map((l: any) => l.id)
+  
+  const selectedTracks = variable.track
+    .filter((c: any) => c.checked)
+    .map((l: any) => l.id)
+  
+  if (variable.title && variable.scenarioType && selectedScenarios.length != 0 && selectedTracks.length != 0) {
     createSimulation({
       variables: {
         simulationInput: {
@@ -163,8 +170,8 @@ export function launchSimulation(variable: any, createSimulation: Function, setV
           platform: variable.platform,
           scenarioType: variable.scenarioType,
           hardware: variable.hardware,
-          tracks: variable.track,
-          scenarios: variable.scenario,
+          tracks: selectedTracks,
+          scenarios: selectedScenarios,
           createdBy: "abc@t-systems.com"
         },
       },

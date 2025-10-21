@@ -61,12 +61,16 @@ const Results = () => {
       accessor: 'name',
     },
     {
-      Header: 'Scenario',
-      accessor: 'scenario',
+      Header: 'Platform',
+      accessor: 'platform',
     },
     {
-      Header: 'Track',
-      accessor: 'track',
+      Header: 'Environment',
+      accessor: 'environment',
+    },
+    {
+      Header: 'Scenario Type',
+      accessor: 'scenarioType',
     },
     {
       Header: 'Status',
@@ -78,7 +82,7 @@ const Results = () => {
       accessor: 'createdBy',
     },
     {
-      Header: 'Execution Date',
+      Header: 'Start Date',
       accessor: 'startDate',
     },
     {
