@@ -70,6 +70,3 @@ Useful scripts
 License
 See LICENSE.md in repository root.
 
-Contact
-Open an issue in the repo for questions or assign to the repository owner for handover.
-
