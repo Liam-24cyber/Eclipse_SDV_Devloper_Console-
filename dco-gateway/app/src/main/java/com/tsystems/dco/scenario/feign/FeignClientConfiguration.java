@@ -25,9 +25,13 @@
 package com.tsystems.dco.scenario.feign;
 
 import feign.auth.BasicAuthRequestInterceptor;
+import feign.codec.Decoder;
+import feign.optionals.OptionalDecoder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.cloud.openfeign.support.ResponseEntityDecoder;
+import feign.jackson.JacksonDecoder;
 
 @Configuration
 public class FeignClientConfiguration {
@@ -40,5 +44,11 @@ public class FeignClientConfiguration {
   @Bean
   public BasicAuthRequestInterceptor basicAuthRequestInterceptor() {
     return new BasicAuthRequestInterceptor(username, password);
+  }
+
+  // Use Jackson-based decoder so we don't depend on MVC HttpMessageConverters in WebFlux
+  @Bean
+  public Decoder feignDecoder() {
+    return new OptionalDecoder(new ResponseEntityDecoder(new JacksonDecoder()));
   }
 }

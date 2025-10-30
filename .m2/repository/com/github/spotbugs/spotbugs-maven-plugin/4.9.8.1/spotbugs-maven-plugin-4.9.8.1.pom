@@ -1,0 +1,1132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Copyright 2005-2025 the original author or authors.
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.github.hazendaz</groupId>
+        <artifactId>base-parent</artifactId>
+        <version>55</version>
+        <relativePath />
+    </parent>
+
+    <groupId>com.github.spotbugs</groupId>
+    <artifactId>spotbugs-maven-plugin</artifactId>
+    <version>4.9.8.1</version>
+    <packaging>maven-plugin</packaging>
+
+    <name>spotbugs-maven-plugin</name>
+    <description>This Plug-In generates reports based on the SpotBugs Library</description>
+    <url>https://spotbugs.github.io/spotbugs-maven-plugin/</url>
+    <inceptionYear>2005</inceptionYear>
+    <organization>
+        <name>Spotbugs</name>
+        <url>https://spotbugs.github.io/</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>jlandis</id>
+            <name>Jeremy Landis</name>
+            <email>jeremylandis@hotmail.com</email>
+            <url>https://www.linkedin.com/in/jeremy-landis-548b2719</url>
+            <organization>hazendaz</organization>
+            <organizationUrl>https://github.com/hazendaz</organizationUrl>
+            <roles>
+                <role>Architect</role>
+                <role>Developer</role>
+            </roles>
+            <timezone>-5</timezone>
+            <properties>
+                <picUrl>https://avatars0.githubusercontent.com/u/975267</picUrl>
+            </properties>
+        </developer>
+    </developers>
+    <contributors>
+        <contributor>
+            <name>Jeremy Landis</name>
+            <email>jeremylandis@hotmail.com</email>
+            <url>https://www.linkedin.com/in/jeremy-landis-548b2719</url>
+            <organization>hazendaz</organization>
+            <organizationUrl>https://github.com/hazendaz</organizationUrl>
+            <roles>
+                <role>Developer</role>
+            </roles>
+            <timezone>-5</timezone>
+            <properties>
+                <picUrl>https://avatars0.githubusercontent.com/u/975267</picUrl>
+            </properties>
+        </contributor>
+    </contributors>
+
+    <prerequisites>
+        <maven>3.6.3</maven>
+    </prerequisites>
+
+    <scm>
+        <connection>scm:git:ssh://git@github.com/spotbugs/spotbugs-maven-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/spotbugs/spotbugs-maven-plugin.git</developerConnection>
+        <tag>spotbugs-maven-plugin-4.9.8.1</tag>
+        <url>https://github.com/spotbugs/spotbugs-maven-plugin</url>
+    </scm>
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/spotbugs/spotbugs-maven-plugin/issues</url>
+    </issueManagement>
+    <ciManagement>
+        <system>Github</system>
+        <url>https://github.com/spotbugs/spotbugs-maven-plugin/actions</url>
+    </ciManagement>
+    <distributionManagement>
+        <site>
+            <id>gh-pages-scm</id>
+            <url>scm:git:ssh://git@github.com/spotbugs/spotbugs-maven-plugin.git</url>
+        </site>
+    </distributionManagement>
+
+    <properties>
+        <!-- Align java runtime with spotbugs -->
+        <java.version>11</java.version>
+        <java.release.version>11</java.release.version>
+        <javadoc.java.release.version>11</javadoc.java.release.version>
+
+        <sourceDirectory>${project.basedir}/src/main/groovy</sourceDirectory>
+        <testSourceDirectory>${project.basedir}/src/test/groovy</testSourceDirectory>
+
+        <!-- Reproducible Builds: override timestamp value from parent -->
+        <project.build.outputTimestamp>1760927507</project.build.outputTimestamp>
+
+        <jacoco.minimum.coverage>0.11</jacoco.minimum.coverage>
+
+        <!-- Override spotbugs to this version from base-parent -->
+        <spotbugs.version>4.9.8</spotbugs.version>
+        <spotbugs.plugin>4.9.7.0</spotbugs.plugin>
+
+        <!-- Use 'master' branch or '${spotbugs.version}' tag for integration test source pull from spotbugs. -->
+        <!-- <spotbugs-scm.version>master</spotbugs-scm.version> -->
+        <spotbugs-scm.version>${spotbugs.version}</spotbugs-scm.version>
+
+        <byte-buddy.version>1.17.8</byte-buddy.version>
+        <javabean-tester.version>2.11.1</javabean-tester.version>
+        <junitVersion>6.0.0</junitVersion>
+        <slf4jVersion>2.0.17</slf4jVersion>
+
+        <antVersion>1.10.15</antVersion>
+        <groovyVersion>5.0.2</groovyVersion>
+        <javaparserVersion>3.27.1</javaparserVersion>
+
+        <doxiaVersion>2.0.0</doxiaVersion>
+        <doxiaSiteToolsVersion>2.0.0</doxiaSiteToolsVersion>
+
+        <mavenSharedUtilsVersion>3.4.2</mavenSharedUtilsVersion>
+        <mavenReportingApiVersion>4.0.0</mavenReportingApiVersion>
+        <mavenReportingVersion>4.0.0</mavenReportingVersion>
+        <mavenVersion>3.9.11</mavenVersion>
+
+        <!-- Maven minimum version -->
+        <maven.min-version>${mavenVersion}</maven.min-version>
+
+        <resolver.version>1.9.24</resolver.version>
+
+        <plexusComponentAnnotationsVersion>2.2.0</plexusComponentAnnotationsVersion>
+        <plexusResourcesVersion>1.3.1</plexusResourcesVersion>
+        <plexusUtilsVersion>4.0.2</plexusUtilsVersion>
+        <plexusVelocityVersion>2.3.0</plexusVelocityVersion>
+        <plexusXmlVersion>3.0.2</plexusXmlVersion>
+
+        <execPluginVersion>3.6.2</execPluginVersion>
+        <pluginPluginVersion>3.15.1</pluginPluginVersion>
+        <l10nPluginVersion>1.1.0</l10nPluginVersion>
+        <codenarcPluginVersion>0.1</codenarcPluginVersion>
+        <gmavenPluginVersion>4.2.1</gmavenPluginVersion>
+        <invokerPluginVersion>3.9.1</invokerPluginVersion>
+        <scmPluginVersion>2.2.1</scmPluginVersion>
+
+        <spotbugsTestDebug>false</spotbugsTestDebug>
+        <integrationTestSrc>${project.build.directory}/it-src-spotbugs</integrationTestSrc>
+        <localTestSrc>${user.dir}/SpotBugs</localTestSrc>
+        <remoteTestSrc>scm:git:https://github.com/spotbugs/spotbugs/</remoteTestSrc>
+        <includesTestSrcPattern>**spotbugsTestCases/src/java/A*.java, **spotbugsTestCases/src/java/Use*.java, **spotbugsTestCases/src/java/annotations/*.java</includesTestSrcPattern>
+        <testSrc>remote</testSrc>
+
+        <!-- Tests -->
+        <spock.version>2.4-M6-groovy-4.0</spock.version>
+
+        <!-- Used by Integration tests -->
+        <findsecbugs.version>1.14.0</findsecbugs.version>
+        <servletApiVersion>6.1.0</servletApiVersion>
+        <sb-contrib.version>7.6.10</sb-contrib.version>
+
+        <jgit.version>7.4.0.202509020913-r</jgit.version>
+
+        <!-- Targeted patches -->
+        <asm.version>9.9</asm.version>
+        <bcel.version>6.11.0</bcel.version>
+        <beanutils.version>1.11.0</beanutils.version>
+        <codec.version>1.19.0</codec.version>
+        <codenarc.version>3.6.0-groovy-4.0</codenarc.version>
+        <collections.version>3.2.2</collections.version>
+        <gson.version>2.13.2</gson.version>
+        <inject.version>1</inject.version>
+        <io.version>2.20.0</io.version>
+        <jaxen.version>2.0.0</jaxen.version>
+        <lang3.version>3.19.0</lang3.version>
+        <logging.version>1.3.5</logging.version>
+        <saxon.he.version>12.9</saxon.he.version>
+
+        <!-- Automatic Module Name -->
+        <module.name>com.github.spotbugs.maven</module.name>
+
+        <!-- Surefire Setup -->
+        <argLine>-javaagent:${settings.localRepository}/net/bytebuddy/byte-buddy-agent/${byte-buddy.version}/byte-buddy-agent-${byte-buddy.version}.jar</argLine>
+
+        <!-- TODO: Skipping tests until spock supports groovy 5. -->
+        <skipTests>true</skipTests>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Ensure we use latest version of byte buddy and further allow argLine to properly work! -->
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>net.bytebuddy</groupId>
+                <artifactId>byte-buddy-agent</artifactId>
+                <version>${byte-buddy.version}</version>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>org.ow2.asm</groupId>
+                <artifactId>asm-bom</artifactId>
+                <version>${asm.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>org.apache.groovy</groupId>
+                <artifactId>groovy-bom</artifactId>
+                <version>${groovyVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-bom</artifactId>
+                <version>${slf4jVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>org.apache.bcel</groupId>
+                <artifactId>bcel</artifactId>
+                <version>${bcel.version}</version>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>${gson.version}</version>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>jaxen</groupId>
+                <artifactId>jaxen</artifactId>
+                <version>${jaxen.version}</version>
+            </dependency>
+
+            <!-- Ensure we use latest version regardless of spotbugs version -->
+            <dependency>
+                <groupId>net.sf.saxon</groupId>
+                <artifactId>Saxon-HE</artifactId>
+                <version>${saxon.he.version}</version>
+            </dependency>
+
+            <!-- Override 'ant' used in groovy to latest -->
+            <dependency>
+                <groupId>org.apache.ant</groupId>
+                <artifactId>ant</artifactId>
+                <version>${antVersion}</version>
+            </dependency>
+
+            <!-- Commons -->
+            <dependency>
+                <groupId>commons-beanutils</groupId>
+                <artifactId>commons-beanutils</artifactId>
+                <version>${beanutils.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-codec</groupId>
+                <artifactId>commons-codec</artifactId>
+                <version>${codec.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-collections</groupId>
+                <artifactId>commons-collections</artifactId>
+                <version>${collections.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>${io.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-lang3</artifactId>
+                <version>${lang3.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-logging</groupId>
+                <artifactId>commons-logging</artifactId>
+                <version>${logging.version}</version>
+            </dependency>
+
+            <!-- Force control of reporting api -->
+            <dependency>
+                <groupId>org.apache.maven.reporting</groupId>
+                <artifactId>maven-reporting-api</artifactId>
+                <version>${mavenReportingApiVersion}</version>
+            </dependency>
+
+            <!-- Ensure latest maven shared utils shows up -->
+            <dependency>
+                <groupId>org.apache.maven.shared</groupId>
+                <artifactId>maven-shared-utils</artifactId>
+                <version>${mavenSharedUtilsVersion}</version>
+            </dependency>
+
+            <!-- Use latest doxia for maven reporting -->
+            <dependency>
+                <groupId>org.apache.maven.doxia</groupId>
+                <artifactId>doxia-site-renderer</artifactId>
+                <version>${doxiaSiteToolsVersion}</version>
+                <exclusions>
+                    <!-- We don't need doxia html (using html5) -->
+                    <exclusion>
+                        <groupId>org.apache.maven.doxia</groupId>
+                        <artifactId>doxia-module-xhtml</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.maven.doxia</groupId>
+                <artifactId>doxia-integration-tools</artifactId>
+                <version>${doxiaSiteToolsVersion}</version>
+            </dependency>
+
+            <!-- Use latest plexus component annotations -->
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-component-annotations</artifactId>
+                <version>${plexusComponentAnnotationsVersion}</version>
+            </dependency>
+
+            <!-- Use latest plexus velocity for doxia 2 -->
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-velocity</artifactId>
+                <version>${plexusVelocityVersion}</version>
+            </dependency>
+
+            <!-- Use latest plexus utils -->
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-utils</artifactId>
+                <version>${plexusUtilsVersion}</version>
+            </dependency>
+
+            <!-- Ensure plexus xml maven 3 compatibility -->
+            <dependency>
+                <groupId>org.codehaus.plexus</groupId>
+                <artifactId>plexus-xml</artifactId>
+                <version>${plexusXmlVersion}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junitVersion}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+
+        <!-- Spotbugs -->
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs</artifactId>
+            <version>${spotbugs.version}</version>
+            <exclusions>
+                <!-- We neither maven uses log4j2 so exclude it as we use slf4j -->
+                <exclusion>
+                    <groupId>org.apache.logging.log4j</groupId>
+                    <artifactId>log4j-core</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Logging forced to slf4j due to spotbugs using log4j2 -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.25.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+        </dependency>
+
+        <!-- Groovy -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-ant</artifactId>
+            <exclusions>
+                <!-- We do not need these items from groovy ant -->
+                <exclusion>
+                    <groupId>org.apache.ant</groupId>
+                    <artifactId>ant-antlr</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.ant</groupId>
+                    <artifactId>ant-junit</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Groovy quirk requires compile scope so optional makes it not show up in consumer builds. -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-docgenerator</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Groovy quirk requires compile scope so optional makes it not show up in consumer builds. -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-groovydoc</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-json</artifactId>
+        </dependency>
+
+        <!-- Groovy quirk requires compile scope so optional makes it not show up in consumer builds. -->
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-templates</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.groovy</groupId>
+            <artifactId>groovy-xml</artifactId>
+        </dependency>
+
+        <!-- JavaParser -->
+        <dependency>
+            <groupId>com.github.javaparser</groupId>
+            <artifactId>javaparser-core</artifactId>
+            <version>${javaparserVersion}</version>
+        </dependency>
+
+        <!-- Maven -->
+        <dependency>
+            <groupId>org.apache.maven.reporting</groupId>
+            <artifactId>maven-reporting-impl</artifactId>
+            <version>${mavenReportingVersion}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>${pluginPluginVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>${mavenVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-artifact</artifactId>
+            <version>${mavenVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>${mavenVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-model</artifactId>
+            <version>${mavenVersion}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Resolver -->
+        <dependency>
+            <groupId>org.apache.maven.resolver</groupId>
+            <artifactId>maven-resolver-api</artifactId>
+            <version>${resolver.version}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>${inject.version}</version>
+        </dependency>
+
+        <!-- doxia -->
+        <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-core</artifactId>
+            <version>${doxiaVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-sink-api</artifactId>
+            <version>${doxiaVersion}</version>
+        </dependency>
+
+        <!-- plexus -->
+        <dependency>
+            <groupId>org.codehaus.plexus</groupId>
+            <artifactId>plexus-resources</artifactId>
+            <version>${plexusResourcesVersion}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.hazendaz</groupId>
+            <artifactId>javabean-tester</artifactId>
+            <version>${javabean-tester.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.spockframework</groupId>
+            <artifactId>spock-core</artifactId>
+            <version>${spock.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <defaultGoal>install</defaultGoal>
+
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-plugin</artifactId>
+                    <version>${pluginPluginVersion}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-plugin-report-plugin</artifactId>
+                    <version>${pluginPluginVersion}</version>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>l10n-maven-plugin</artifactId>
+                    <version>${l10nPluginVersion}</version>
+                    <configuration>
+                        <locales>
+                            <locale>es</locale>
+                            <locale>fr</locale>
+                            <locale>no_NO</locale>
+                            <locale>pt_BR</locale>
+                        </locales>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <configuration>
+                        <excludeFilterFile>${project.basedir}/src/main/tools/spotbugs-exclude-filters.xml</excludeFilterFile>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>com.mycila</groupId>
+                    <artifactId>license-maven-plugin</artifactId>
+                    <configuration>
+                        <licenseSets>
+                            <licenseSet>
+                                <excludes combine.children="append">
+                                    <exclude>**/*edu.umd.cs.findbugs.core.prefs</exclude>
+                                    <exclude>**/*.txt</exclude>
+                                </excludes>
+                            </licenseSet>
+                        </licenseSets>
+                        <mapping>
+                            <bsh>SLASHSTAR_STYLE</bsh>
+                        </mapping>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>io.github.crizzis</groupId>
+                    <artifactId>codenarc-maven-plugin</artifactId>
+                    <version>${codenarcPluginVersion}</version>
+                    <configuration>
+                        <maxPriority1Violations>0</maxPriority1Violations>
+                        <maxPriority2Violations>0</maxPriority2Violations>
+                        <maxPriority3Violations>0</maxPriority3Violations>
+                    </configuration>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.codenarc</groupId>
+                            <artifactId>CodeNarc</artifactId>
+                            <version>${codenarc.version}</version>
+                        </dependency>
+                    </dependencies>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <configuration>
+                        <attributes>
+                            <spotbugsVersion>${spotbugs.version}</spotbugsVersion>
+                        </attributes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>add-stubfixer-sources</id>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <sources>
+                                <source>${project.basedir}/src/stubfixer/java</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Compile stubfixer. -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>compile-stubfixer</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/stubfixer/java</compileSourceRoot>
+                            </compileSourceRoots>
+                            <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>default-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                        <phase>process-classes</phase>
+                    </execution>
+                    <!-- Generate help goal -->
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>${gmavenPluginVersion}</version>
+                <configuration>
+                    <attachGroovyDocAnnotation>true</attachGroovyDocAnnotation>
+                    <docTitle>${project.name} Groovy Documentation</docTitle>
+                    <groovyDocOutputDirectory>${project.reporting.outputDirectory}/gapidocs</groovyDocOutputDirectory>
+                    <testGroovyDocOutputDirectory>${project.reporting.outputDirectory}/testgapidocs</testGroovyDocOutputDirectory>
+                    <footer>${project.name} Groovy Documentation</footer>
+                    <header>${project.name} Groovy Documentation</header>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.apache.groovy</groupId>
+                        <artifactId>groovy</artifactId>
+                        <version>${groovyVersion}</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>compileGroovy</id>
+                        <goals>
+                            <goal>addSources</goal>
+                            <goal>addTestSources</goal>
+                            <goal>generateStubs</goal>
+                            <goal>compile</goal>
+                            <goal>generateTestStubs</goal>
+                            <goal>compileTests</goal>
+                            <goal>removeStubs</goal>
+                            <goal>removeTestStubs</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>generate-groovydoc</id>
+                        <goals>
+                            <goal>groovydoc</goal>
+                            <goal>groovydoc-jar</goal>
+                            <goal>groovydocTests</goal>
+                            <goal>groovydocTests-jar</goal>
+                        </goals>
+                        <phase>package</phase>
+                    </execution>
+                    <execution>
+                        <id>site</id>
+                        <goals>
+                            <goal>generateStubs</goal>
+                            <goal>generateTestStubs</goal>
+                            <goal>groovydoc</goal>
+                            <goal>groovydocTests</goal>
+                            <goal>groovydoc-jar</goal>
+                            <goal>groovydocTests-jar</goal>
+                        </goals>
+                        <phase>site</phase>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Add missing @Override to stubs fixing codeql issues that groovy doesn't care about. -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${execPluginVersion}</version>
+                <executions>
+                    <execution>
+                        <id>run-stubfixer-main</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <phase>generate-sources</phase>
+                        <configuration>
+                            <mainClass>com.github.spotbugs.StubOverrideFixer</mainClass>
+                            <classpathScope>compile</classpathScope>
+                            <arguments>
+                                <argument>${project.build.directory}/generated-sources/groovy-stubs/main</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>run-stubfixer-test</id>
+                        <goals>
+                            <goal>java</goal>
+                        </goals>
+                        <phase>generate-test-sources</phase>
+                        <configuration>
+                            <mainClass>com.github.spotbugs.StubOverrideFixer</mainClass>
+                            <classpathScope>compile</classpathScope>
+                            <arguments>
+                                <argument>${project.build.directory}/generated-sources/groovy-stubs/test</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>io.github.crizzis</groupId>
+                <artifactId>codenarc-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.openrewrite.maven</groupId>
+                <artifactId>rewrite-maven-plugin</artifactId>
+                <configuration>
+                    <exclusions>
+                        <!-- Open rewrite cannot handle non packaged groovy files used by maven invoker. -->
+                        <exclusion>**/*verify.groovy</exclusion>
+                        <!-- Open rewrite cannot handle groovy traits. -->
+                        <exclusion>**/*SpotBugsPluginsTrait.groovy</exclusion>
+                    </exclusions>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>net.revelc.code.formatter</groupId>
+                <artifactId>formatter-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>process-test-sources</id>
+                        <goals>
+                            <goal>format</goal>
+                        </goals>
+                        <phase>process-test-sources</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <reporting>
+        <excludeDefaults>true</excludeDefaults>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-report-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>l10n-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>io.github.crizzis</groupId>
+                <artifactId>codenarc-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.github.spotbugs</groupId>
+                <artifactId>spotbugs-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </reporting>
+
+    <profiles>
+        <profile>
+            <id>eclipse</id>
+            <activation>
+                <property>
+                    <name>m2e.version</name>
+                </property>
+            </activation>
+            <build>
+                <pluginManagement>
+                    <plugins>
+                        <!--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.-->
+                        <plugin>
+                            <groupId>org.eclipse.m2e</groupId>
+                            <artifactId>lifecycle-mapping</artifactId>
+                            <!-- Keep version here as fake version and maven report info has problems defining it in dependency management -->
+                            <version>${lifecycle.plugin}</version>
+                            <configuration>
+                                <lifecycleMappingMetadata>
+                                    <pluginExecutions combine.children="append">
+                                        <!-- Ignore gmavenplus in m2e -->
+                                        <pluginExecution>
+                                            <pluginExecutionFilter>
+                                                <groupId>org.codehaus.gmavenplus</groupId>
+                                                <artifactId>gmavenplus-plugin</artifactId>
+                                                <versionRange>[${gmavenPluginVersion},)</versionRange>
+                                                <goals>
+                                                    <goal>addSources</goal>
+                                                    <goal>addTestSources</goal>
+                                                    <goal>generateStubs</goal>
+                                                    <goal>compile</goal>
+                                                    <goal>generateTestStubs</goal>
+                                                    <goal>compileTests</goal>
+                                                    <goal>removeStubs</goal>
+                                                    <goal>removeTestStubs</goal>
+                                                </goals>
+                                            </pluginExecutionFilter>
+                                            <action>
+                                                <ignore />
+                                            </action>
+                                        </pluginExecution>
+
+                                        <!-- Ignore exec maven plugin in m2e -->
+                                        <pluginExecution>
+                                            <pluginExecutionFilter>
+                                                <groupId>org.apache.maven.plugins</groupId>
+                                                <artifactId>exec-maven-plugin</artifactId>
+                                                <versionRange>[${execPluginVersion},)</versionRange>
+                                                <goals>
+                                                    <goal>java</goal>
+                                                </goals>
+                                            </pluginExecutionFilter>
+                                            <action>
+                                                <ignore />
+                                            </action>
+                                        </pluginExecution>
+                                    </pluginExecutions>
+                                </lifecycleMappingMetadata>
+                            </configuration>
+                        </plugin>
+                    </plugins>
+                </pluginManagement>
+            </build>
+        </profile>
+
+        <profile>
+            <id>run-its</id>
+            <properties>
+                <spotbug.debug>false</spotbug.debug>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <version>${invokerPluginVersion}</version>
+                        <dependencies>
+                            <!-- Keep groovy at same version we are using -->
+                            <dependency>
+                                <groupId>org.apache.groovy</groupId>
+                                <artifactId>groovy</artifactId>
+                                <version>${groovyVersion}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.groovy</groupId>
+                                <artifactId>groovy-json</artifactId>
+                                <version>${groovyVersion}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.groovy</groupId>
+                                <artifactId>groovy-nio</artifactId>
+                                <version>${groovyVersion}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.apache.groovy</groupId>
+                                <artifactId>groovy-xml</artifactId>
+                                <version>${groovyVersion}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <!--Package test include and exclude files and file local repo -->
+                                <id>prepare-integration-test</id>
+                                <goals>
+                                    <goal>install</goal>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <parallelThreads>1</parallelThreads>
+                                    <projectsDirectory>${project.basedir}/src/it-tools</projectsDirectory>
+                                    <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+                                    <showVersion>true</showVersion>
+                                    <pomIncludes>
+                                        <pomInclude>*/pom.xml</pomInclude>
+                                    </pomIncludes>
+                                    <postBuildHookScript>verify</postBuildHookScript>
+                                    <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+                                    <goals>
+                                        <goal>install</goal>
+                                    </goals>
+                                    <settingsFile>${project.basedir}/src/it/settings.xml</settingsFile>
+                                    <streamLogsOnFailures>true</streamLogsOnFailures>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>integration-test-run</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <projectsDirectory>${project.basedir}/src/it</projectsDirectory>
+                                    <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+                                    <showVersion>true</showVersion>
+                                    <pomIncludes>
+                                        <pomInclude>*/pom.xml</pomInclude>
+                                    </pomIncludes>
+                                    <postBuildHookScript>verify</postBuildHookScript>
+                                    <localRepositoryPath>${project.build.directory}/local-repo</localRepositoryPath>
+                                    <settingsFile>${project.basedir}/src/it/settings.xml</settingsFile>
+                                    <streamLogsOnFailures>true</streamLogsOnFailures>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>spot-it-src-checkout</id>
+            <activation>
+                <property>
+                    <name>testSrc</name>
+                    <value>remote</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-scm-plugin</artifactId>
+                        <version>${scmPluginVersion}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.apache.maven.scm</groupId>
+                                <artifactId>maven-scm-provider-jgit</artifactId>
+                                <version>${scmPluginVersion}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.eclipse.jgit</groupId>
+                                <artifactId>org.eclipse.jgit</artifactId>
+                                <version>${jgit.version}</version>
+                            </dependency>
+                            <dependency>
+                                <groupId>org.eclipse.jgit</groupId>
+                                <artifactId>org.eclipse.jgit.ssh.jsch</artifactId>
+                                <version>${jgit.version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>prepare-integration-test-remote-spotbugs-src</id>
+                                <goals>
+                                    <goal>checkout</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <connectionUrl>${remoteTestSrc}</connectionUrl>
+                                    <checkoutDirectory>${integrationTestSrc}</checkoutDirectory>
+                                    <providerImplementations>
+                                        <git>jgit</git>
+                                    </providerImplementations>
+                                    <includes>${includesTestSrcPattern}</includes>
+                                    <scmVersion>${spotbugs-scm.version}</scmVersion>
+                                    <scmVersionType>tag</scmVersionType>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>spot-it-src-local</id>
+            <activation>
+                <property>
+                    <name>testSrc</name>
+                    <value>local</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>prepare-integration-test-local-spotbugs-src</id>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <target>
+                                        <echo level="debug">Copying Source for Tests......</echo>
+                                        <echo level="debug">Making ${integrationTestSrc}</echo>
+                                        <mkdir dir="${integrationTestSrc}" />
+                                        <echo level="debug">Copying to ${integrationTestSrc}</echo>
+                                        <echo level="debug">from ${localTestSrc}</echo>
+                                        <echo level="debug">for ${includesTestSrcPattern}</echo>
+                                        <copy todir="${integrationTestSrc}">
+                                            <fileset dir="${localTestSrc}" includes="${includesTestSrcPattern}" />
+                                        </copy>
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+</project>

@@ -36,7 +36,7 @@
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
+      <artifactId>spring-boot-starter-webflux</artifactId>
     </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -51,20 +51,17 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
     </dependency>
+    <!-- Jakarta Servlet API for Spring Boot 3.x compatibility -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.graphql-java-kickstart</groupId>
-      <artifactId>graphql-java-tools</artifactId>
-      <version>13.0.3</version>
-    </dependency>
-    <dependency>
-      <groupId>com.graphql-java-kickstart</groupId>
-      <artifactId>graphql-spring-boot-starter</artifactId>
-      <version>15.0.0</version>
-    </dependency>
+    <!-- GraphQL support is now provided by spring-boot-starter-graphql which is reactive-compatible -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -82,6 +79,38 @@
       <artifactId>json</artifactId>
       <version>20230227</version>
     </dependency>
+
+    <!-- Enhanced API Gateway Dependencies -->
+    <!-- Spring Cloud Gateway for advanced routing -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-gateway</artifactId>
+    </dependency>
+    
+    <!-- Redis for caching -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+    
+    <!-- Reactive Redis for Spring Cloud Gateway -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-data-redis-reactive</artifactId>
+    </dependency>
+    
+    <!-- Enhanced monitoring and metrics -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+    
+    <!-- Request/Response transformation support -->
+    <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+    </dependency>
+
     <!-- test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -92,6 +121,11 @@
       <groupId>org.springframework.graphql</groupId>
       <artifactId>spring-graphql-test</artifactId>
       <scope>test</scope>
+    </dependency>
+    <!-- Add Jackson decoder for Feign to avoid HttpMessageConverters dependency in WebFlux -->
+    <dependency>
+      <groupId>io.github.openfeign</groupId>
+      <artifactId>feign-jackson</artifactId>
     </dependency>
   </dependencies>
 

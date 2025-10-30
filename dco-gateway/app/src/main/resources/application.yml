@@ -18,10 +18,11 @@ server:
   port: ${app.rest.port}
   forward-headers-strategy: FRAMEWORK
 spring:
-  servlet:
-    multipart:
-      max-request-size: -1
-      enabled: true
+  main:
+    allow-bean-definition-overriding: true
+    web-application-type: reactive
+  codec:
+    max-in-memory-size: 10MB
   graphql:
     path: /graphql
     graphiql:
@@ -33,6 +34,61 @@ spring:
     cors:
       allowed-origins: ${app.cors.origins}
       allowed-headers: ${app.cors.headers}
+  
+  # Enhanced API Gateway Configuration
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: ${app.cors.origins}
+            allowedHeaders: ${app.cors.headers}
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowCredentials: true
+      routes:
+        # Route for Scenario Library Service
+        - id: scenario-service-route
+          uri: ${app.scenario.rest.url}
+          predicates:
+            - Path=/api/gateway/scenarios/**
+          filters:
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+        
+        # Route for Tracks Management Service  
+        - id: tracks-service-route
+          uri: ${app.track.rest.url}
+          predicates:
+            - Path=/api/gateway/tracks/**
+          filters:
+            - StripPrefix=3
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                redis-rate-limiter.requestedTokens: 1
+
+  # Redis Configuration for Caching
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
 management:
   server:
     port: ${app.probes.port}

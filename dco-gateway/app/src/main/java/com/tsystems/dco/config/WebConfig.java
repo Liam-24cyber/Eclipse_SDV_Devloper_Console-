@@ -25,24 +25,34 @@ package com.tsystems.dco.config;
 
 import com.tsystems.dco.AppProperties;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.reactive.CorsWebFilter;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 /**
- * Configuration for MVC and cors.
+ * Configuration for reactive CORS.
  */
 @Configuration
 @RequiredArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
+public class WebConfig {
 
   private final AppProperties properties;
 
-  @Override
-  public void addCorsMappings(CorsRegistry registry) {
-    registry.addMapping("/**")
-      .allowedMethods("HEAD", "GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS")
-      .allowedOrigins(properties.getCors().getOrigins())
-      .allowedHeaders(properties.getCors().getHeaders());
+  @Bean
+  public CorsWebFilter corsWebFilter() {
+    CorsConfiguration corsConfiguration = new CorsConfiguration();
+    corsConfiguration.setAllowedMethods(Arrays.asList("HEAD", "GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"));
+    corsConfiguration.setAllowedOriginPatterns(Arrays.asList(properties.getCors().getOrigins()));
+    corsConfiguration.setAllowedHeaders(Arrays.asList(properties.getCors().getHeaders()));
+    corsConfiguration.setAllowCredentials(true);
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", corsConfiguration);
+
+    return new CorsWebFilter(source);
   }
 }

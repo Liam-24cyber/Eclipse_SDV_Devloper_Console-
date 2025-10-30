@@ -3,17 +3,15 @@ package com.tsystems.dco.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.core.userdetails.MapReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
-import org.springframework.security.web.SecurityFilterChain;
-
-import static org.springframework.security.config.Customizer.withDefaults;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
 public class SecurityConfig {
 
   @Value("${app.username}")
@@ -22,15 +20,20 @@ public class SecurityConfig {
   private String password;
 
   @Bean
-  public SecurityFilterChain configure(HttpSecurity http) throws Exception {
-    return http.cors().and().csrf().disable()
-      .authorizeRequests(auth -> auth.anyRequest().authenticated())
-      .httpBasic(withDefaults())
+  public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
+    return http
+      .cors(ServerHttpSecurity.CorsSpec::disable)
+      .csrf(ServerHttpSecurity.CsrfSpec::disable)
+      .authorizeExchange(exchanges -> exchanges
+        .pathMatchers("/actuator/**", "/actuator/health/**", "/actuator/prometheus/**").permitAll()
+        .anyExchange().authenticated()
+      )
+      .httpBasic(httpBasic -> {})
       .build();
   }
 
   @Bean
-  public InMemoryUserDetailsManager userDetailsManager() {
+  public MapReactiveUserDetailsService userDetailsService() {
 
     UserDetails user1 = User.withDefaultPasswordEncoder()
       .username(username)
@@ -50,7 +53,7 @@ public class SecurityConfig {
       .roles("USER","ADMIN")
       .build();
 
-    return new InMemoryUserDetailsManager(user1, user2, admin);
+    return new MapReactiveUserDetailsService(user1, user2, admin);
   }
 
 }
