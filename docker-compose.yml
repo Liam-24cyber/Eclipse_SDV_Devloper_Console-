@@ -128,6 +128,19 @@ services:
       - postgres
     restart: unless-stopped
 
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672"    # AMQP port
+      - "15672:15672"  # Management UI port
+    restart: unless-stopped
+
   # Redis for Enhanced API Gateway Caching
   redis:
     image: redis:7-alpine
@@ -138,6 +151,52 @@ services:
     volumes:
       - redis-data:/data
     restart: unless-stopped
+
+  # Message Queue Service
+  message-queue-service:
+    image: message-queue-service:1.0
+    container_name: message-queue-service
+    build:
+      context: .
+      dockerfile: message-queue-service/Dockerfile.app
+    ports:
+      - "8083:8083"
+    environment:
+      APP_REST_PORT: 8083
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq
+
+  # Webhook Management Service
+  webhook-management-service:
+    image: webhook-management-service:1.0
+    container_name: webhook-management-service
+    build:
+      context: .
+      dockerfile: webhook-management-service/Dockerfile.app
+    ports:
+      - "8084:8084"
+    environment:
+      APP_REST_PORT: 8084
+      APP_POSTGRES_HOST: postgres
+      APP_POSTGRES_PORT: 5432
+      APP_POSTGRES_DATABASE: postgres
+      APP_POSTGRES_USERNAME: postgres
+      APP_POSTGRES_PASSWORD: postgres
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: admin123
+      MESSAGE_QUEUE_SERVICE_URL: message-queue-service:8083
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - rabbitmq
+      - message-queue-service
 
   # Prometheus server for metrics collection
   prometheus:
@@ -169,6 +228,8 @@ services:
     restart: unless-stopped
 
 volumes:
+  rabbitmq_data:
+    driver: local
   redis-data:
     driver: local
   grafana-data:

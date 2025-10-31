@@ -34,6 +34,7 @@ import com.tsystems.dco.model.Scenario;
 import com.tsystems.dco.model.ScenarioInput;
 import com.tsystems.dco.model.ScenarioPage;
 import com.tsystems.dco.scenario.entity.ScenarioEntity;
+import com.tsystems.dco.scenario.publisher.EventPublisher;
 import com.tsystems.dco.scenario.repository.ScenarioRepository;
 import com.tsystems.dco.simulation.entity.SimulationEntity;
 import com.tsystems.dco.simulation.repository.SimulationRepository;
@@ -68,6 +69,7 @@ public class ScenarioServiceImpl implements ScenarioService {
   private final ScenarioRepository scenarioRepository;
   private final FileStorageService fileStorageService;
   private final SimulationRepository simulationRepository;
+  private final EventPublisher eventPublisher;
 
 
   /**
@@ -86,6 +88,21 @@ public class ScenarioServiceImpl implements ScenarioService {
     //file upload
     FileData fileData = fileStorageService.uploadFile(scenarioEntity.getId(), file, scenarioEntity.getCreatedBy());
     attachFile(scenarioEntity, fileData);
+    
+    // Publish scenario created event
+    try {
+      java.util.Map<String, Object> eventData = new java.util.HashMap<>();
+      eventData.put("action", "created");
+      eventData.put("name", scenarioEntity.getName());
+      eventData.put("type", scenarioEntity.getType());
+      eventData.put("description", scenarioEntity.getDescription());
+      eventData.put("createdBy", scenarioEntity.getCreatedBy());
+      eventData.put("createdAt", scenarioEntity.getCreatedAt().toString());
+      eventPublisher.publishScenarioEvent("scenario.created", scenarioEntity.getId().toString(), eventData);
+    } catch (Exception e) {
+      LOGGER.warn("Failed to publish scenario created event for scenario {}: {}", scenarioEntity.getId(), e.getMessage());
+    }
+    
     return ScenarioMapper.INSTANCE.toModel(scenarioEntity);
   }
 
@@ -116,6 +133,18 @@ public class ScenarioServiceImpl implements ScenarioService {
     if (isScenarioAssociated) {
       LOGGER.info("Deleting scenario : {}", actual.getId());
       actual.setStatus(ScenarioInput.StatusEnum.ARCHIVED.getValue());
+      
+      // Publish scenario deleted event
+      try {
+        java.util.Map<String, Object> eventData = new java.util.HashMap<>();
+        eventData.put("action", "deleted");
+        eventData.put("name", actual.getName());
+        eventData.put("type", actual.getType());
+        eventData.put("status", actual.getStatus());
+        eventPublisher.publishScenarioEvent("scenario.deleted", actual.getId().toString(), eventData);
+      } catch (Exception e) {
+        LOGGER.warn("Failed to publish scenario deleted event for scenario {}: {}", actual.getId(), e.getMessage());
+      }
     } else {
       LOGGER.error("Scenario id : {}, can't be deleted as it has an association with simulation", actual.getId());
       throw new DataDeletionException(HttpStatus.BAD_REQUEST, "Scenario can't be deleted as it has an association with simulation");
@@ -181,6 +210,21 @@ public class ScenarioServiceImpl implements ScenarioService {
     actualScenario.setLastModifiedAt(Instant.now());
     actualScenario.setFile(fileEntity);
     final var updatedScenario = scenarioRepository.save(actualScenario);
+    
+    // Publish scenario updated event
+    try {
+      java.util.Map<String, Object> eventData = new java.util.HashMap<>();
+      eventData.put("action", "updated");
+      eventData.put("name", updatedScenario.getName());
+      eventData.put("type", updatedScenario.getType());
+      eventData.put("description", updatedScenario.getDescription());
+      eventData.put("lastModifiedBy", updatedScenario.getLastModifiedBy());
+      eventData.put("lastModifiedAt", updatedScenario.getLastModifiedAt().toString());
+      eventPublisher.publishScenarioEvent("scenario.updated", updatedScenario.getId().toString(), eventData);
+    } catch (Exception e) {
+      LOGGER.warn("Failed to publish scenario updated event for scenario {}: {}", updatedScenario.getId(), e.getMessage());
+    }
+    
     return ScenarioMapper.INSTANCE.toModel(updatedScenario);
   }
 

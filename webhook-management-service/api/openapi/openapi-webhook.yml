@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: Webhook Management Service API
+  description: API for managing webhook registrations, event subscriptions, and delivery handling
+  version: 1.0.0
+  contact:
+    name: T-Systems
+    email: info@t-systems.com
+
+servers:
+  - url: http://localhost:8084
+    description: Local development server
+
+paths:
+  /api/v1/webhooks:
+    get:
+      tags:
+        - Webhook Management
+      summary: List all webhooks
+      description: Retrieves all registered webhooks with optional filtering
+      operationId: listWebhooks
+      parameters:
+        - name: eventType
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by event type
+        - name: isActive
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter by active status
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookPageResponse'
+
+    post:
+      tags:
+        - Webhook Management
+      summary: Register a new webhook
+      description: Creates a new webhook subscription
+      operationId: createWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreateRequest'
+      responses:
+        '201':
+          description: Webhook created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '400':
+          description: Invalid request
+        '409':
+          description: Webhook already exists
+
+  /api/v1/webhooks/{webhookId}:
+    get:
+      tags:
+        - Webhook Management
+      summary: Get webhook details
+      description: Retrieves detailed information about a specific webhook
+      operationId: getWebhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '404':
+          description: Webhook not found
+
+    put:
+      tags:
+        - Webhook Management
+      summary: Update webhook
+      description: Updates an existing webhook configuration
+      operationId: updateWebhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdateRequest'
+      responses:
+        '200':
+          description: Webhook updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookResponse'
+        '404':
+          description: Webhook not found
+
+    delete:
+      tags:
+        - Webhook Management
+      summary: Delete webhook
+      description: Deletes a webhook subscription
+      operationId: deleteWebhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Webhook deleted successfully
+        '404':
+          description: Webhook not found
+
+  /api/v1/webhooks/{webhookId}/test:
+    post:
+      tags:
+        - Webhook Management
+      summary: Test webhook
+      description: Sends a test event to the webhook endpoint
+      operationId: testWebhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookTestRequest'
+      responses:
+        '200':
+          description: Test completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookTestResponse'
+
+  /api/v1/webhooks/{webhookId}/deliveries:
+    get:
+      tags:
+        - Webhook Deliveries
+      summary: Get webhook deliveries
+      description: Retrieves delivery history for a specific webhook
+      operationId: getWebhookDeliveries
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [SUCCESS, FAILED, PENDING, RETRY]
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Webhook deliveries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDeliveryPageResponse'
+
+  /api/v1/webhooks/{webhookId}/deliveries/{deliveryId}/retry:
+    post:
+      tags:
+        - Webhook Deliveries
+      summary: Retry failed delivery
+      description: Retries a failed webhook delivery
+      operationId: retryDelivery
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: deliveryId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: Retry scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookDeliveryResponse'
+
+  /api/v1/events/trigger:
+    post:
+      tags:
+        - Event Triggering
+      summary: Trigger webhook event
+      description: Manually triggers webhook deliveries for a specific event
+      operationId: triggerEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventTriggerRequest'
+      responses:
+        '202':
+          description: Event triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTriggerResponse'
+
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the webhook management service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+    WebhookCreateRequest:
+      type: object
+      required:
+        - name
+        - url
+        - eventTypes
+      properties:
+        name:
+          type: string
+          description: Webhook name/identifier
+        description:
+          type: string
+          description: Webhook description
+        url:
+          type: string
+          format: uri
+          description: Target webhook URL
+        eventTypes:
+          type: array
+          items:
+            type: string
+          description: List of event types to subscribe to
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Custom headers to include in webhook requests
+        secret:
+          type: string
+          description: Secret for webhook signature verification
+        isActive:
+          type: boolean
+          default: true
+          description: Whether the webhook is active
+        retryConfig:
+          $ref: '#/components/schemas/RetryConfig'
+
+    WebhookUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        eventTypes:
+          type: array
+          items:
+            type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        secret:
+          type: string
+        isActive:
+          type: boolean
+        retryConfig:
+          $ref: '#/components/schemas/RetryConfig'
+
+    WebhookResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        eventTypes:
+          type: array
+          items:
+            type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        isActive:
+          type: boolean
+        retryConfig:
+          $ref: '#/components/schemas/RetryConfig'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        lastDeliveryAt:
+          type: string
+          format: date-time
+        deliveryStats:
+          $ref: '#/components/schemas/DeliveryStats'
+
+    WebhookPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    WebhookTestRequest:
+      type: object
+      properties:
+        eventType:
+          type: string
+          description: Event type to test with
+        payload:
+          type: object
+          description: Test payload data
+
+    WebhookTestResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        statusCode:
+          type: integer
+        responseTime:
+          type: integer
+          description: Response time in milliseconds
+        responseBody:
+          type: string
+        error:
+          type: string
+
+    WebhookDeliveryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        webhookId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+        eventType:
+          type: string
+        status:
+          type: string
+          enum: [SUCCESS, FAILED, PENDING, RETRY]
+        statusCode:
+          type: integer
+        responseTime:
+          type: integer
+        attemptCount:
+          type: integer
+        maxAttempts:
+          type: integer
+        nextRetryAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+
+    WebhookDeliveryPageResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryResponse'
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+        totalPages:
+          type: integer
+
+    EventTriggerRequest:
+      type: object
+      required:
+        - eventType
+        - data
+      properties:
+        eventType:
+          type: string
+          description: Type of event to trigger
+        data:
+          type: object
+          description: Event payload data
+        source:
+          type: string
+          description: Source service of the event
+        correlationId:
+          type: string
+          description: Correlation ID for tracing
+
+    EventTriggerResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+        triggeredWebhooks:
+          type: integer
+          description: Number of webhooks that will receive this event
+        deliveryIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    RetryConfig:
+      type: object
+      properties:
+        maxAttempts:
+          type: integer
+          default: 3
+          minimum: 1
+          maximum: 10
+        initialDelay:
+          type: integer
+          default: 5000
+          description: Initial delay in milliseconds
+        backoffMultiplier:
+          type: number
+          default: 2.0
+          minimum: 1.0
+        maxDelay:
+          type: integer
+          default: 300000
+          description: Maximum delay in milliseconds
+
+    DeliveryStats:
+      type: object
+      properties:
+        totalDeliveries:
+          type: integer
+        successfulDeliveries:
+          type: integer
+        failedDeliveries:
+          type: integer
+        pendingDeliveries:
+          type: integer
+        averageResponseTime:
+          type: integer
+          description: Average response time in milliseconds
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, DEGRADED]
+        components:
+          type: object
+          properties:
+            database:
+              $ref: '#/components/schemas/ComponentHealth'
+            rabbitmq:
+              $ref: '#/components/schemas/ComponentHealth'
+
+    ComponentHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+        details:
+          type: object
+          additionalProperties:
+            type: string
