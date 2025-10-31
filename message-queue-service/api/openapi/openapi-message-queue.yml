@@ -1,0 +1,379 @@
+openapi: 3.0.3
+info:
+  title: Message Queue Integration Service API
+  description: API for managing message queue operations, event publishing, and message routing
+  version: 1.0.0
+  contact:
+    name: T-Systems
+    email: info@t-systems.com
+
+servers:
+  - url: http://localhost:8083
+    description: Local development server
+
+paths:
+  /api/v1/messages/publish:
+    post:
+      tags:
+        - Message Publishing
+      summary: Publish a message to a queue
+      description: Publishes a message to the specified RabbitMQ queue
+      operationId: publishMessage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MessagePublishRequest'
+      responses:
+        '202':
+          description: Message published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessagePublishResponse'
+        '400':
+          description: Invalid request
+        '500':
+          description: Internal server error
+
+  /api/v1/queues:
+    get:
+      tags:
+        - Queue Management
+      summary: List all queues
+      description: Retrieves information about all configured queues
+      operationId: listQueues
+      responses:
+        '200':
+          description: List of queues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QueueInfo'
+
+    post:
+      tags:
+        - Queue Management
+      summary: Create a new queue
+      description: Creates a new RabbitMQ queue with specified configuration
+      operationId: createQueue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QueueCreateRequest'
+      responses:
+        '201':
+          description: Queue created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueInfo'
+        '400':
+          description: Invalid request
+        '409':
+          description: Queue already exists
+
+  /api/v1/queues/{queueName}:
+    get:
+      tags:
+        - Queue Management
+      summary: Get queue information
+      description: Retrieves detailed information about a specific queue
+      operationId: getQueue
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Queue information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QueueInfo'
+        '404':
+          description: Queue not found
+
+    delete:
+      tags:
+        - Queue Management
+      summary: Delete a queue
+      description: Deletes the specified queue
+      operationId: deleteQueue
+      parameters:
+        - name: queueName
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Queue deleted successfully
+        '404':
+          description: Queue not found
+
+  /api/v1/exchanges:
+    get:
+      tags:
+        - Exchange Management
+      summary: List all exchanges
+      description: Retrieves information about all configured exchanges
+      operationId: listExchanges
+      responses:
+        '200':
+          description: List of exchanges
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExchangeInfo'
+
+    post:
+      tags:
+        - Exchange Management
+      summary: Create a new exchange
+      description: Creates a new RabbitMQ exchange
+      operationId: createExchange
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExchangeCreateRequest'
+      responses:
+        '201':
+          description: Exchange created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExchangeInfo'
+
+  /api/v1/events/publish:
+    post:
+      tags:
+        - Event Publishing
+      summary: Publish domain event
+      description: Publishes a domain event to the appropriate exchange
+      operationId: publishEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPublishRequest'
+      responses:
+        '202':
+          description: Event published successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventPublishResponse'
+
+  /api/v1/health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the health status of the message queue service
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+
+components:
+  schemas:
+    MessagePublishRequest:
+      type: object
+      required:
+        - queueName
+        - payload
+      properties:
+        queueName:
+          type: string
+          description: Name of the target queue
+        routingKey:
+          type: string
+          description: Routing key for the message
+        payload:
+          type: object
+          description: Message payload
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+          description: Message headers
+        priority:
+          type: integer
+          minimum: 0
+          maximum: 255
+          description: Message priority
+        ttl:
+          type: integer
+          description: Time to live in milliseconds
+
+    MessagePublishResponse:
+      type: object
+      properties:
+        messageId:
+          type: string
+          description: Unique message identifier
+        status:
+          type: string
+          enum: [PUBLISHED, QUEUED, FAILED]
+        timestamp:
+          type: string
+          format: date-time
+
+    QueueCreateRequest:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Queue name
+        durable:
+          type: boolean
+          default: true
+          description: Whether the queue survives server restart
+        exclusive:
+          type: boolean
+          default: false
+          description: Whether the queue is exclusive to one connection
+        autoDelete:
+          type: boolean
+          default: false
+          description: Whether the queue is deleted when no longer used
+        arguments:
+          type: object
+          additionalProperties:
+            type: string
+          description: Additional queue arguments
+
+    QueueInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        durable:
+          type: boolean
+        exclusive:
+          type: boolean
+        autoDelete:
+          type: boolean
+        messageCount:
+          type: integer
+        consumerCount:
+          type: integer
+        arguments:
+          type: object
+          additionalProperties:
+            type: string
+
+    ExchangeCreateRequest:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        name:
+          type: string
+          description: Exchange name
+        type:
+          type: string
+          enum: [direct, topic, fanout, headers]
+          description: Exchange type
+        durable:
+          type: boolean
+          default: true
+          description: Whether the exchange survives server restart
+        autoDelete:
+          type: boolean
+          default: false
+          description: Whether the exchange is deleted when no longer used
+
+    ExchangeInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        durable:
+          type: boolean
+        autoDelete:
+          type: boolean
+
+    EventPublishRequest:
+      type: object
+      required:
+        - eventType
+        - source
+        - data
+      properties:
+        eventType:
+          type: string
+          description: Type of the event (e.g., scenario.created, track.uploaded)
+        source:
+          type: string
+          description: Source service that generated the event
+        data:
+          type: object
+          description: Event data payload
+        correlationId:
+          type: string
+          description: Correlation ID for tracing
+        timestamp:
+          type: string
+          format: date-time
+          description: Event timestamp
+
+    EventPublishResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+          description: Unique event identifier
+        status:
+          type: string
+          enum: [PUBLISHED, QUEUED, FAILED]
+        timestamp:
+          type: string
+          format: date-time
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN, DEGRADED]
+        components:
+          type: object
+          properties:
+            rabbitmq:
+              $ref: '#/components/schemas/ComponentHealth'
+            database:
+              $ref: '#/components/schemas/ComponentHealth'
+
+    ComponentHealth:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [UP, DOWN]
+        details:
+          type: object
+          additionalProperties:
+            type: string

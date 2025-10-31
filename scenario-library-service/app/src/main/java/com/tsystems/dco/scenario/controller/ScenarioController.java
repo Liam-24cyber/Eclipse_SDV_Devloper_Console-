@@ -25,6 +25,7 @@ package com.tsystems.dco.scenario.controller;
 
 import com.tsystems.dco.model.ScenarioPage;
 import com.tsystems.dco.scenario.service.ScenarioService;
+import com.tsystems.dco.scenario.service.EventPublishingService;
 import com.tsystems.dco.api.ScenarioApi;
 import com.tsystems.dco.model.Scenario;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,7 @@ public class ScenarioController implements ScenarioApi {
   private static final Logger LOGGER = LoggerFactory.getLogger(ScenarioController.class);
 
   private final ScenarioService scenarioService;
+  private final EventPublishingService eventPublishingService;
 
   /**
    * POST /api/scenario : Create a Scenario
@@ -58,9 +60,14 @@ public class ScenarioController implements ScenarioApi {
   @Override
   public ResponseEntity<Scenario> createScenario(String scenario, MultipartFile file) {
     LOGGER.info("Creating Scenario - {}", scenario);
+    Scenario createdScenario = scenarioService.createScenario(scenario, file);
+    
+    // Publish event after successful scenario creation
+    eventPublishingService.publishScenarioCreatedEvent(createdScenario);
+    
     return ResponseEntity
       .status(HttpStatus.CREATED)
-      .body(scenarioService.createScenario(scenario, file));
+      .body(createdScenario);
   }
 
   /**
@@ -75,6 +82,10 @@ public class ScenarioController implements ScenarioApi {
   public ResponseEntity<Void> deleteScenarioById(UUID id) {
     LOGGER.info("Deleting scenario id - {}", id);
     scenarioService.deleteScenarioById(id);
+    
+    // Publish event after successful scenario deletion
+    eventPublishingService.publishScenarioDeletedEvent(id);
+    
     return ResponseEntity
       .status(HttpStatus.NO_CONTENT)
       .build();

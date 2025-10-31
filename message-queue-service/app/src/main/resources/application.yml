@@ -1,0 +1,65 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: message-queue-service
+  
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: admin
+    password: admin123
+    virtual-host: /
+    connection-timeout: 30s
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 2s
+          max-attempts: 3
+          multiplier: 2
+        default-requeue-rejected: false
+        acknowledge-mode: auto
+    template:
+      retry:
+        enabled: true
+        initial-interval: 2s
+        max-attempts: 3
+        multiplier: 2
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+    deserialization:
+      fail-on-unknown-properties: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    rabbit:
+      enabled: true
+
+logging:
+  level:
+    com.tsystems.dco.messagequeue: DEBUG
+    org.springframework.amqp: DEBUG
+    org.springframework.rabbit: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Application-specific configuration
+app:
+  messaging:
+    default-ttl: 3600000  # 1 hour in milliseconds
+    max-retry-attempts: 3
+    retry-delay: 2000     # 2 seconds
+    dead-letter-ttl: 86400000  # 24 hours in milliseconds

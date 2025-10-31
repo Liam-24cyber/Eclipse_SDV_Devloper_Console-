@@ -35,6 +35,12 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: true
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: admin
+    password: password
+    virtual-host: /
 springdoc:
   api-docs:
     path: /openapi
