@@ -46,6 +46,12 @@ management:
       enabled: true
     build:
       enabled: false
+  endpoints:
+    enabled-by-default: false
+    web:
+      base-path: /management
+      exposure:
+        include: info,health,metrics,prometheus
   endpoint:
     info:
       enabled: true
@@ -55,9 +61,3 @@ management:
       enabled: true
     prometheus:
       enabled: true
-    endpoints:
-      enabled-by-default: false
-      web:
-        base-path: /management
-        exposure:
-          include: info,health,metrics,prometheus

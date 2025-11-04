@@ -57,8 +57,10 @@ services:
       SCENARIO-SERVICE_URL: scenario-library-service:8082
     restart: unless-stopped
     depends_on:
-      - postgres 
-      - pgadmin
+      postgres:
+        condition: service_healthy
+      pgadmin:
+        condition: service_started
 
   scenario-library-service:
     image: scenario-library-service:1.0
@@ -80,10 +82,15 @@ services:
       APP_POSTGRES_USERNAME: postgres
       APP_POSTGRES_PASSWORD: postgres
       TRACK-SERVICE_URL: tracks-management-service:8081
+      MESSAGE_QUEUE_SERVICE_URL: http://message-queue-service:8083
     restart: unless-stopped
     depends_on:
-      - postgres
-      - pgadmin
+      postgres:
+        condition: service_healthy
+      pgadmin:
+        condition: service_started
+      message-queue-service:
+        condition: service_started
 
   minio:
     image: minio:1.0
@@ -100,6 +107,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
       MINIO_SERVER_URL: http://localhost:9000
+    volumes:
+      - minio-data:/data
     restart: unless-stopped  
 
   postgres: 
@@ -114,6 +123,13 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   pgadmin:   
@@ -123,7 +139,9 @@ services:
       PGADMIN_DEFAULT_EMAIL: admin@default.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - "5050:80" 
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
     depends_on:
       - postgres
     restart: unless-stopped
@@ -139,6 +157,13 @@ services:
     ports:
       - "5672:5672"    # AMQP port
       - "15672:15672"  # Management UI port
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
     restart: unless-stopped
 
   # Redis for Enhanced API Gateway Caching
@@ -167,9 +192,16 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin123
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     restart: unless-stopped
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
 
   # Webhook Management Service
   webhook-management-service:
@@ -194,9 +226,12 @@ services:
       MESSAGE_QUEUE_SERVICE_URL: message-queue-service:8083
     restart: unless-stopped
     depends_on:
-      - postgres
-      - rabbitmq
-      - message-queue-service
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      message-queue-service:
+        condition: service_healthy
 
   # Prometheus server for metrics collection
   prometheus:
@@ -206,6 +241,7 @@ services:
       - "9090:9090"
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -228,9 +264,17 @@ services:
     restart: unless-stopped
 
 volumes:
-  rabbitmq_data:
+  postgres-data:
+    driver: local
+  rabbitmq-data:
     driver: local
   redis-data:
+    driver: local
+  minio-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+  prometheus-data:
     driver: local
   grafana-data:
     driver: local

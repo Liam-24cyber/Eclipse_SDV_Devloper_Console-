@@ -36,6 +36,12 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
+    <!-- Metrics and Monitoring -->
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+    </dependency>
+
     <!-- RabbitMQ -->
     <dependency>
       <groupId>org.springframework.boot</groupId>

@@ -36,7 +36,9 @@ import com.tsystems.dco.simulation.entity.SimulationResultEntity;
 
 import java.math.BigDecimal;
 import java.security.SecureRandom;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +47,10 @@ public class CampaignService {
   private static final Logger LOGGER = LoggerFactory.getLogger(CampaignService.class);
   
   private final SimulationResultService simulationResultService;
+  private final SimulationEventPublisher eventPublisher;
+  
+  // Track which simulations have already had their completion/failure events published
+  private final Map<UUID, String> publishedEventStatuses = new ConcurrentHashMap<>();
 
   /**
    * @param campaignRequest
@@ -61,16 +67,17 @@ public class CampaignService {
   /**
    * @param campaignId
    * @param simulationId
+   * @param simulationName
    * @return Campaign
    */
-  public Campaign checkStatus(UUID campaignId, UUID simulationId) {
+  public Campaign checkStatus(UUID campaignId, UUID simulationId, String simulationName) {
     //calling  campaign service and get the campaign status as response
     // returning mocked campaign response
     String status = getMockedCampaignStatus();
     
     // Generate some sample logs and metrics for demonstration
     if (simulationId != null) {
-      generateSampleResults(simulationId, status);
+      generateSampleResults(simulationId, simulationName, status);
     }
     
     return Campaign.builder()
@@ -81,16 +88,25 @@ public class CampaignService {
 
   /**
    * @param campaignId
+   * @param simulationId
+   * @return Campaign
+   */
+  public Campaign checkStatus(UUID campaignId, UUID simulationId) {
+    return checkStatus(campaignId, simulationId, null);
+  }
+
+  /**
+   * @param campaignId
    * @return Campaign
    */
   public Campaign checkStatus(UUID campaignId) {
-    return checkStatus(campaignId, null);
+    return checkStatus(campaignId, null, null);
   }
 
   /**
    * Generate sample simulation results for demonstration
    */
-  private void generateSampleResults(UUID simulationId, String status) {
+  private void generateSampleResults(UUID simulationId, String simulationName, String status) {
     try {
       // Add some sample logs
       simulationResultService.addLog(simulationId, 
@@ -116,7 +132,7 @@ public class CampaignService {
         "count", 
         SimulationMetricEntity.MetricCategory.VEHICLE);
 
-      // If simulation is done, complete it
+      // If simulation is done, complete it and publish completion event
       if ("Done".equals(status)) {
         simulationResultService.addLog(simulationId, 
           SimulationLogEntity.LogLevel.INFO, 
@@ -131,6 +147,16 @@ public class CampaignService {
           "Execution Summary",
           "Simulation completed with no errors. All vehicles processed successfully.",
           null, "text/plain", null);
+        
+        // Publish simulation completed event (only once)
+        if (simulationName != null && !hasEventBeenPublished(simulationId, "Done")) {
+          try {
+            eventPublisher.publishSimulationCompleted(simulationId, simulationName, null);
+            markEventAsPublished(simulationId, "Done");
+          } catch (Exception e) {
+            LOGGER.error("Failed to publish simulation completed event", e);
+          }
+        }
           
       } else if ("Error".equals(status)) {
         simulationResultService.addLog(simulationId, 
@@ -138,8 +164,18 @@ public class CampaignService {
           "Simulation failed due to configuration error", 
           "SimulationEngine");
           
-        simulationResultService.completeSimulation(simulationId, status, null, 
-          "Configuration validation failed");
+        String errorMessage = "Configuration validation failed";
+        simulationResultService.completeSimulation(simulationId, status, null, errorMessage);
+        
+        // Publish simulation failed event (only once)
+        if (simulationName != null && !hasEventBeenPublished(simulationId, "Error")) {
+          try {
+            eventPublisher.publishSimulationFailed(simulationId, simulationName, errorMessage, null);
+            markEventAsPublished(simulationId, "Error");
+          } catch (Exception e) {
+            LOGGER.error("Failed to publish simulation failed event", e);
+          }
+        }
       }
       
     } catch (Exception e) {
@@ -165,5 +201,19 @@ public class CampaignService {
     } else {
       return "Error";
     }
+  }
+  
+  /**
+   * Check if an event has already been published for a simulation with a specific status
+   */
+  private boolean hasEventBeenPublished(UUID simulationId, String status) {
+    return status.equals(publishedEventStatuses.get(simulationId));
+  }
+  
+  /**
+   * Mark that an event has been published for a simulation with a specific status
+   */
+  private void markEventAsPublished(UUID simulationId, String status) {
+    publishedEventStatuses.put(simulationId, status);
   }
 }

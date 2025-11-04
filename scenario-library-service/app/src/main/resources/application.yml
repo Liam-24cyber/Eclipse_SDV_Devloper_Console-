@@ -36,10 +36,10 @@ spring:
       ddl-auto: none
     show-sql: true
   rabbitmq:
-    host: localhost
+    host: rabbitmq
     port: 5672
     username: admin
-    password: password
+    password: admin123
     virtual-host: /
 springdoc:
   api-docs:
@@ -54,6 +54,12 @@ management:
       enabled: true
     build:
       enabled: false
+  endpoints:
+    enabled-by-default: false
+    web:
+      base-path: /management
+      exposure:
+        include: info,health,metrics,prometheus
   endpoint:
     info:
       enabled: true
@@ -63,9 +69,3 @@ management:
       enabled: true
     prometheus:
       enabled: true
-    endpoints:
-      enabled-by-default: false
-      web:
-        base-path: /management
-        exposure:
-          include: info,health,metrics,prometheus

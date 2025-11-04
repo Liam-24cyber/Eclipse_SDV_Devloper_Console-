@@ -24,9 +24,11 @@
 
 package com.tsystems.dco.scenario.feign;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.auth.BasicAuthRequestInterceptor;
 import feign.codec.Decoder;
 import feign.optionals.OptionalDecoder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,15 +42,18 @@ public class FeignClientConfiguration {
   private String username;
   @Value("${app.password}")
   private String password;
+  
+  @Autowired
+  private ObjectMapper objectMapper;
 
   @Bean
   public BasicAuthRequestInterceptor basicAuthRequestInterceptor() {
     return new BasicAuthRequestInterceptor(username, password);
   }
 
-  // Use Jackson-based decoder so we don't depend on MVC HttpMessageConverters in WebFlux
+  // Use Jackson-based decoder with our configured ObjectMapper (includes JSR310 support)
   @Bean
   public Decoder feignDecoder() {
-    return new OptionalDecoder(new ResponseEntityDecoder(new JacksonDecoder()));
+    return new OptionalDecoder(new ResponseEntityDecoder(new JacksonDecoder(objectMapper)));
   }
 }

@@ -20,7 +20,7 @@ public interface WebhookRepository extends JpaRepository<Webhook, UUID> {
 
     org.springframework.data.domain.Page<Webhook> findByIsActive(Boolean isActive, org.springframework.data.domain.Pageable pageable);
 
-    @Query("SELECT w FROM Webhook w JOIN w.eventTypes et WHERE et.eventType = :eventType AND w.isActive = true")
+    @Query("SELECT DISTINCT w FROM Webhook w LEFT JOIN FETCH w.headers LEFT JOIN w.eventTypes et WHERE et.eventType = :eventType AND w.isActive = true")
     List<Webhook> findActiveWebhooksByEventType(@Param("eventType") String eventType);
 
     @Query("SELECT w FROM Webhook w WHERE w.lastDeliveryAt < :cutoffTime")

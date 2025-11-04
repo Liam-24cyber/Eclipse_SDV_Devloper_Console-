@@ -70,6 +70,7 @@ public class ScenarioServiceImpl implements ScenarioService {
   private final FileStorageService fileStorageService;
   private final SimulationRepository simulationRepository;
   private final EventPublisher eventPublisher;
+  private final ObjectMapper objectMapper;
 
 
   /**
@@ -81,8 +82,7 @@ public class ScenarioServiceImpl implements ScenarioService {
   @Transactional
   @Override
   public Scenario createScenario(String scenarioInput, MultipartFile file) {
-    var mapper = new ObjectMapper();
-    ScenarioInput scenario = mapper.readValue(scenarioInput, ScenarioInput.class);
+    ScenarioInput scenario = objectMapper.readValue(scenarioInput, ScenarioInput.class);
     var scenarioEntity = ScenarioMapper.INSTANCE.toEntity(scenario);
     scenarioEntity = scenarioRepository.save(scenarioEntity);
     //file upload
@@ -188,8 +188,7 @@ public class ScenarioServiceImpl implements ScenarioService {
   @Transactional
   @Override
   public Scenario scenarioUpdateById(UUID id, String scenarioInput, MultipartFile file) {
-    var mapper = new ObjectMapper();
-    ScenarioInput scenario = mapper.readValue(scenarioInput, ScenarioInput.class);
+    ScenarioInput scenario = objectMapper.readValue(scenarioInput, ScenarioInput.class);
     final var actualScenario = scenarioRepository.findById(id)
       .orElseThrow(() -> new DataNotFoundException(HttpStatus.NOT_FOUND, String.format(ERROR_NOT_FOUND_ID, id)));
     //update file

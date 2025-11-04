@@ -3,8 +3,47 @@ global:
   evaluation_interval: 15s
 
 scrape_configs:
+  # DCO Gateway - GraphQL API Gateway
   - job_name: 'dco-gateway'
+    basic_auth:
+      username: developer
+      password: password
     static_configs:
       - targets: ['dco-gateway:8080']
     metrics_path: '/management/prometheus'
+    scrape_interval: 30s
+
+  # Tracks Management Service
+  - job_name: 'tracks-management-service'
+    static_configs:
+      - targets: ['tracks-management-service:8081']
+    metrics_path: '/management/prometheus'
+    scrape_interval: 30s
+
+  # Scenario Library Service
+  - job_name: 'scenario-library-service'
+    static_configs:
+      - targets: ['scenario-library-service:8082']
+    metrics_path: '/management/prometheus'
+    scrape_interval: 30s
+
+  # Message Queue Service
+  - job_name: 'message-queue-service'
+    static_configs:
+      - targets: ['message-queue-service:8083']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+
+  # Webhook Management Service
+  - job_name: 'webhook-management-service'
+    static_configs:
+      - targets: ['webhook-management-service:8084']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+
+  # RabbitMQ Metrics
+  - job_name: 'rabbitmq'
+    static_configs:
+      - targets: ['rabbitmq:15692']
+    metrics_path: '/metrics'
     scrape_interval: 30s

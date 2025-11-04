@@ -48,7 +48,9 @@ public class SecurityConfig {
   @Bean
   public SecurityFilterChain configure(HttpSecurity http) throws Exception {
     return http.csrf(csrf -> csrf.disable())
-      .authorizeRequests(auth -> auth.anyRequest().authenticated())
+      .authorizeRequests(auth -> auth
+        .requestMatchers("/management/**").permitAll()  // Allow unauthenticated access to management endpoints
+        .anyRequest().authenticated())
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .httpBasic(withDefaults())
       .build();

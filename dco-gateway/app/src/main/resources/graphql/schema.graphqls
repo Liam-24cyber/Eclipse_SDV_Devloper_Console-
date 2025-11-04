@@ -9,7 +9,7 @@ type Scenario {
   id: ID
   name: String
   status: StatusEnum
-  type: TypeEnum
+  type: String
   description: String
   url: String
   createdBy: String

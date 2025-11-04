@@ -41,7 +41,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -56,6 +58,7 @@ public class SimulationServiceImpl implements SimulationService {
   private final TrackRepositoryApiClient trackRepositoryApiClient;
   private final CampaignService campaignService;
   private final ScenarioRepository scenarioRepository;
+  private final SimulationEventPublisher eventPublisher;
 
 
   /**
@@ -74,6 +77,20 @@ public class SimulationServiceImpl implements SimulationService {
     simulationEntity.setCampaignId(campaign.getId());
     simulationEntity.setStatus(campaign.getStatus());
     SimulationEntity simulation = simulationRepository.save(simulationEntity);
+    
+    // Publish simulation started event
+    try {
+      Map<String, Object> metadata = new HashMap<>();
+      metadata.put("campaignId", campaign.getId().toString());
+      metadata.put("platform", simulationInput.getPlatform());
+      metadata.put("environment", simulationInput.getEnvironment());
+      metadata.put("scenarioCount", simulationInput.getScenarios().size());
+      metadata.put("trackCount", simulationInput.getTracks().size());
+      eventPublisher.publishSimulationStarted(simulation.getId(), simulation.getName(), metadata);
+    } catch (Exception e) {
+      LOGGER.error("Failed to publish simulation started event", e);
+    }
+    
     return "Simulation launched with id : " + simulation.getId();
   }
 
@@ -128,7 +145,7 @@ public class SimulationServiceImpl implements SimulationService {
         .environment(simulation.getEnvironment())
         .scenarioType(simulation.getScenarioType())
         .startDate(simulation.getStartDate())
-        .status(campaignService.checkStatus(simulation.getCampaignId()).getStatus())
+        .status(campaignService.checkStatus(simulation.getCampaignId(), simulation.getId(), simulation.getName()).getStatus())
         .noOfVehicle(vehicleStream.sum())
         .brands(brands)
         .hardware(simulation.getHardware())

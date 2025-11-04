@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client'
 import axios from 'axios'
+import client from '../libs/apollo'
 import { Link } from '../libs/apollo'
 import { GET_SCENARIO } from './queries'
 import { setTimeOutFunction } from './functionShared'
@@ -21,79 +22,31 @@ export const libRowData = (rawData: any) =>
     }
   })
 export const getLibData = async (pageNo: any, searchval: any) => {
-  // Mock scenario data with real UUIDs from database
-  const mockScenarios = [
-    {
-      id: '93b866de-a642-4543-886c-a3597dbe9d8f',
-      name: 'Basic Lane Change',
-      type: 'lane_change',
-      file: { path: '/scenarios/basic_lane_change.odx' },
-      createdBy: 'system',
-      description: 'Simple lane change scenario',
-      lastModifiedAt: new Date().toISOString(),
-    },
-    {
-      id: '0069e772-957c-43d2-84dd-45abd30214d5',
-      name: 'Emergency Braking',
-      type: 'emergency',
-      file: { path: '/scenarios/emergency_braking.txt' },
-      createdBy: 'system',
-      description: 'Emergency braking test scenario',
-      lastModifiedAt: new Date(Date.now() - 86400000).toISOString(),
-    },
-    {
-      id: '848b8ea7-cb2d-4fda-a617-7d6a79d526a7',
-      name: 'Intersection Navigation',
-      type: 'intersection',
-      file: { path: '/scenarios/intersection_navigation.txt' },
-      createdBy: 'system',
-      description: 'Complex intersection scenario',
-      lastModifiedAt: new Date(Date.now() - 172800000).toISOString(),
-    },
-    {
-      id: '4',
-      name: 'Parking Assist Scenario',
-      type: 'CAN',
-      file: { path: '/scenarios/parking_assist.txt' },
-      createdBy: 'test_user',
-      description: 'Automated parallel parking test',
-      lastModifiedAt: new Date(Date.now() - 259200000).toISOString(),
-    },
-    {
-      id: '5',
-      name: 'Lane Keep Assist Test',
-      type: 'MQTT',
-      file: { path: '/scenarios/lane_keep_assist.txt' },
-      createdBy: 'admin',
-      description: 'Lane keeping assistance system validation',
-      lastModifiedAt: new Date(Date.now() - 345600000).toISOString(),
-    },
-  ]
-
-  // Filter by search value
-  const filteredScenarios = searchval 
-    ? mockScenarios.filter(s => 
-        s.name.toLowerCase().includes(searchval.toLowerCase()) ||
-        s.description.toLowerCase().includes(searchval.toLowerCase())
-      )
-    : mockScenarios
-
-  // Pagination
-  const pageSize = 10
-  const startIndex = (pageNo - 1) * pageSize
-  const endIndex = startIndex + pageSize
-  const paginatedScenarios = filteredScenarios.slice(startIndex, endIndex)
-
-  // Return mock response
-  return Promise.resolve({
-    data: {
-      searchScenarioByPattern: {
-        content: paginatedScenarios,
-        pages: Math.ceil(filteredScenarios.length / pageSize),
-        total: filteredScenarios.length,
+  // Make real API call to GraphQL endpoint
+  try {
+    const result = await client.query({
+      query: gql`${GET_SCENARIO}`,
+      variables: {
+        scenarioPattern: searchval || '',
+        page: pageNo - 1, // Convert to 0-based index
+        size: 10,
+      },
+      fetchPolicy: 'network-only', // Always fetch fresh data from server
+    })
+    return result
+  } catch (error) {
+    console.error('Error fetching scenarios:', error)
+    // Return empty result on error
+    return {
+      data: {
+        searchScenarioByPattern: {
+          content: [],
+          pages: 0,
+          total: 0,
+        }
       }
     }
-  })
+  }
 }
 //  scenario active and archived tab data end****
 

@@ -1,12 +1,19 @@
 package com.tsystems.dco.messagequeue.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import org.springframework.amqp.core.*;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration;
+import org.springframework.boot.autoconfigure.AutoConfigureBefore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,6 +24,8 @@ import org.springframework.context.annotation.Configuration;
  * for the SDV Developer Console event-driven architecture.
  */
 @Configuration
+@EnableRabbit
+@AutoConfigureBefore(RabbitAutoConfiguration.class)
 public class RabbitMQConfig {
 
     // Exchange names
@@ -54,20 +63,30 @@ public class RabbitMQConfig {
     private String rabbitPassword;
 
     /**
-     * JSON message converter for RabbitMQ messages
+     * JSON message converter for RabbitMQ messages.
+     * Uses the globally configured ObjectMapper from JacksonConfig.
      */
     @Bean
-    public MessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public MessageConverter jsonMessageConverter(ObjectMapper objectMapper) {
+        return new Jackson2JsonMessageConverter(objectMapper);
+    }
+
+    /**
+     * RabbitAdmin bean to enable automatic declaration of exchanges, queues, and bindings.
+     * This ensures all RabbitMQ resources are created when the service starts.
+     */
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
     }
 
     /**
      * RabbitTemplate with JSON message converter
      */
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory, MessageConverter messageConverter) {
         RabbitTemplate template = new RabbitTemplate(connectionFactory);
-        template.setMessageConverter(jsonMessageConverter());
+        template.setMessageConverter(messageConverter);
         return template;
     }
 
@@ -75,10 +94,12 @@ public class RabbitMQConfig {
      * Rabbit listener container factory with JSON converter
      */
     @Bean
-    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(ConnectionFactory connectionFactory) {
+    public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory, 
+            MessageConverter messageConverter) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
-        factory.setMessageConverter(jsonMessageConverter());
+        factory.setMessageConverter(messageConverter);
         return factory;
     }
 

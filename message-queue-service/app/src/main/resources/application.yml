@@ -21,6 +21,7 @@ spring:
           multiplier: 2
         default-requeue-rejected: false
         acknowledge-mode: auto
+        auto-startup: true
     template:
       retry:
         enabled: true
@@ -34,6 +35,8 @@ spring:
       write-dates-as-timestamps: false
     deserialization:
       fail-on-unknown-properties: false
+    modules:
+      - com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 
 management:
   endpoints:
@@ -43,6 +46,12 @@ management:
   endpoint:
     health:
       show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
   health:
     rabbit:
       enabled: true
@@ -52,6 +61,8 @@ logging:
     com.tsystems.dco.messagequeue: DEBUG
     org.springframework.amqp: DEBUG
     org.springframework.rabbit: DEBUG
+    org.springframework.boot.actuate: DEBUG
+    io.micrometer: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
     file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

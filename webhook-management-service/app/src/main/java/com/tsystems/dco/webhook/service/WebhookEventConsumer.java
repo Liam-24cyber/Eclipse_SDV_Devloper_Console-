@@ -41,9 +41,14 @@ public class WebhookEventConsumer {
     private final ObjectMapper objectMapper;
 
     @RabbitListener(queues = RabbitMQConfig.SCENARIO_EVENTS_QUEUE)
-    public void handleScenarioEvent(Map<String, Object> eventData) {
+    public void handleScenarioEvent(String eventDataJson) {
         try {
-            log.info("Received scenario event: {}", eventData);
+            log.info("Received scenario event (raw): {}", eventDataJson);
+            
+            // Parse JSON to Map
+            @SuppressWarnings("unchecked")
+            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
+            log.info("Parsed scenario event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
@@ -56,14 +61,19 @@ public class WebhookEventConsumer {
             }
             
         } catch (Exception e) {
-            log.error("Error processing scenario event: {}", eventData, e);
+            log.error("Error processing scenario event: {}", eventDataJson, e);
         }
     }
 
     @RabbitListener(queues = RabbitMQConfig.TRACK_EVENTS_QUEUE)
-    public void handleTrackEvent(Map<String, Object> eventData) {
+    public void handleTrackEvent(String eventDataJson) {
         try {
-            log.info("Received track event: {}", eventData);
+            log.info("Received track event (raw): {}", eventDataJson);
+            
+            // Parse JSON to Map
+            @SuppressWarnings("unchecked")
+            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
+            log.info("Parsed track event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
@@ -76,14 +86,19 @@ public class WebhookEventConsumer {
             }
             
         } catch (Exception e) {
-            log.error("Error processing track event: {}", eventData, e);
+            log.error("Error processing track event: {}", eventDataJson, e);
         }
     }
 
     @RabbitListener(queues = RabbitMQConfig.SIMULATION_EVENTS_QUEUE) 
-    public void handleSimulationEvent(Map<String, Object> eventData) {
+    public void handleSimulationEvent(String eventDataJson) {
         try {
-            log.info("Received simulation event: {}", eventData);
+            log.info("Received simulation event (raw): {}", eventDataJson);
+            
+            // Parse JSON to Map
+            @SuppressWarnings("unchecked")
+            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
+            log.info("Parsed simulation event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
@@ -96,7 +111,7 @@ public class WebhookEventConsumer {
             }
             
         } catch (Exception e) {
-            log.error("Error processing simulation event: {}", eventData, e);
+            log.error("Error processing simulation event: {}", eventDataJson, e);
         }
     }
 }
