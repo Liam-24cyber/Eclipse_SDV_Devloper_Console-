@@ -48,16 +48,99 @@ Thumbs.db
 # Test files
 *.test.js
 *.test.ts
-test-*.sh
-insert-*.sql
-sample-*/
 
-# Documentation drafts
-*-NEW.md
-*_IMPLEMENTATION_GUIDE.md
-*_QUICK_START.md
+# Logs and test execution files
+*.log
+test-execution*.log
+e2e-api.log
+build.log
+rebuild*.log
+webhook-deliveries.log
+
+# Test documentation
+TEST_*.md
+*TEST*.md
+TESTING_*.md
+
+# Demo documentation
+DEMO_*.md
+demo-script.md
+POSTMAN_*.md
+
+# Fix and issue documentation
+FIX_*.md
+*FIX*.md
+CRITICAL_*.md
+COMPLETE_*.md
+*ISSUE*.md
+*BLOCKER*.md
+
+# Status and analysis documentation
+*_STATUS.md
+*_ANALYSIS.md
+DEPLOYMENT_STATUS.md
+INFRASTRUCTURE_STATUS.md
+RABBITMQ_*.md
+REDIS_*.md
+PROMETHEUS_*.md
+
+# Quick references and guides
+QUICK_*.md
+*_QUICK_*.md
+ALL_URLS.md
+SERVICE_URLS.md
+LOGIN_CREDENTIALS.md
+LOCAL_ENDPOINTS.md
+HOW_TO_*.md
+STARTUP_*.md
+RESTART_*.md
+SEED_*.md
+
+# Workflow documentation
+E2E_*.md
+*WORKFLOW*.md
+EVENT_FLOW*.md
+*_FLOW_*.md
+
+# Other temporary documentation
+DO_THIS_NOW.md
+NEXT_STEPS.md
+FILES_*.md
+READY_*.md
+SESSION_*.md
+ROOT_CAUSE*.md
+DOCUMENTATION_INDEX.md
+*DEPLOYMENT.md
+DATA_PERSISTENCE*.md
+VOLUME_*.md
+AUTO_SEEDING*.md
+API_VERIFICATION*.md
 *_SUMMARY.md
-*_COMPLETE_SETUP.md
-*_FIX.md
 *_REPORT.md
-SETUP_GUIDE.md
+
+# Test scripts (but keep essential startup scripts)
+execute-test-plan.sh
+deploy-and-test-webhooks.sh
+publish-test-event.sh
+seed-test-webhook.sh
+check-demo-readiness.sh
+test-all-endpoints.sh
+open-demo-tabs.sh
+check-status.sh
+fix-*.sh
+purge-*.sh
+
+# Keep these essential scripts - DO NOT IGNORE:
+!start-all-services.sh
+!run-e2e-demo.sh
+!start-e2e-api.sh
+!10-build-script.sh
+!20-deploy-script.sh
+!30-destroy-script.sh
+
+# Test infrastructure
+e2e-api-server.js
+mock-webhook-server.js
+E2E_Demo_API.postman_collection.json
+
+test-*.sh
