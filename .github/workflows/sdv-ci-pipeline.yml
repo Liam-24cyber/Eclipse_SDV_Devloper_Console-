@@ -35,7 +35,6 @@ jobs:
       - name: Build & Test Webhook Service
         run: |
           cd webhook-management-service
-          cd app
           mvn clean install -DskipTests=false
 
 
