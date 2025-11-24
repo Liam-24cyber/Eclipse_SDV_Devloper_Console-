@@ -1,5 +1,6 @@
 name: SDV Developer Console CI
 
+# Trigger the pipeline on push or pull request to the 'main' branch
 on:
   push:
     branches: [ "main" ]
@@ -27,29 +28,21 @@ jobs:
         with:
           node-version: '20'
 
-      # --- STAGE 2: UNIT TESTS ---
-      - name: Build & Unit Test (Message Queue)
+      # --- STAGE 2: BUILD & UNIT TEST ---
+      
+      # 1. Webhook Service: Run with tests ENABLED (-DskipTests=false)
+      # We build from the PARENT directory so it builds the 'api' dependency first
+      - name: Build & Test Webhook Service
         run: |
-          cd message-queue-service/app 
+          cd webhook-management-service
+          cd app
           mvn clean install -DskipTests=false
 
-      - name: Build & Unit Test (Webhook Service)
-        run: |
-          cd webhook-management-service/app 
-          mvn clean install -DskipTests=false
-
-      - name: Build Other Services
-        run: |
-          cd scenario-library-service/app && mvn clean install -DskipTests
-          cd ../..
-          cd tracks-management-service/app && mvn clean install -DskipTests
-          cd ../..
-          cd dco-gateway/app && mvn clean install -DskipTests
 
       # --- STAGE 3: START ENVIRONMENT ---
       - name: Start Docker Environment
         run: |
-          # FIX: Use 'docker compose' instead of 'docker-compose'
+          # Using 'docker compose' (v2) syntax which is required for GitHub Actions
           docker compose up -d --build
           echo "⏳ Waiting 60s for services to stabilize..."
           sleep 60
@@ -68,6 +61,7 @@ jobs:
           done
 
       # --- STAGE 5: SEED DATABASE ---
+      # Critical Step: This fixes the missing 'webhook_deliveries' table issue
       - name: Seed Database
         run: |
           chmod +x seed-database.sh
@@ -89,5 +83,4 @@ jobs:
       - name: Dump Docker Logs (If Failure)
         if: failure()
         run: |
-          # FIX: Use 'docker compose' here as well
           docker compose logs
