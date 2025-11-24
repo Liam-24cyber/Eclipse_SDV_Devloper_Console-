@@ -1,6 +1,5 @@
 name: SDV Developer Console CI
 
-# Trigger the pipeline on push or pull request to the 'main' branch
 on:
   push:
     branches: [ "main" ]
@@ -28,8 +27,7 @@ jobs:
         with:
           node-version: '20'
 
-      # --- STAGE 2: UNIT TESTS (Logic Check) ---
-      # We verify your Java logic (JUnit + Mockito) before starting heavy containers
+      # --- STAGE 2: UNIT TESTS ---
       - name: Build & Unit Test (Message Queue)
         run: |
           cd message-queue-service/app 
@@ -40,7 +38,7 @@ jobs:
           cd webhook-management-service/app 
           mvn clean install -DskipTests=false
 
-      - name: Build Other Services (Skipping tests for speed if needed)
+      - name: Build Other Services
         run: |
           cd scenario-library-service/app && mvn clean install -DskipTests
           cd ../..
@@ -48,17 +46,17 @@ jobs:
           cd ../..
           cd dco-gateway/app && mvn clean install -DskipTests
 
-      # --- STAGE 3: START ENVIRONMENT (Infrastructure Check) ---
+      # --- STAGE 3: START ENVIRONMENT ---
       - name: Start Docker Environment
         run: |
-          docker-compose up -d --build
+          # FIX: Use 'docker compose' instead of 'docker-compose'
+          docker compose up -d --build
           echo "⏳ Waiting 60s for services to stabilize..."
           sleep 60
 
-      # --- STAGE 4: HEALTH CHECKS (Pulse Check) ---
+      # --- STAGE 4: HEALTH CHECKS ---
       - name: Verify Service Health
         run: |
-          # Simple curl loop to check if Gateway is up
           echo "Checking API Gateway..."
           for i in {1..10}; do
             if curl -s http://localhost:8080/actuator/health | grep "UP"; then
@@ -69,14 +67,13 @@ jobs:
             sleep 5
           done
 
-      # --- STAGE 5: SEED DATABASE (Fix Missing Tables) ---
-      # This runs your script to create the webhook_deliveries table
+      # --- STAGE 5: SEED DATABASE ---
       - name: Seed Database
         run: |
           chmod +x seed-database.sh
           ./seed-database.sh
 
-      # --- STAGE 6: E2E WORKFLOW (User Experience Check) ---
+      # --- STAGE 6: E2E WORKFLOW ---
       - name: Install Newman
         run: npm install -g newman
 
@@ -91,4 +88,6 @@ jobs:
       # --- DEBUGGING ---
       - name: Dump Docker Logs (If Failure)
         if: failure()
-        run: docker-compose logs
+        run: |
+          # FIX: Use 'docker compose' here as well
+          docker compose logs
