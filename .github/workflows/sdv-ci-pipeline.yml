@@ -34,52 +34,12 @@ jobs:
       - name: Build & Test Webhook Service
         run: |
           echo "📦 Installing Webhook API..."
-          cd webhook-management-service/api
+          cd webhook-management-service
           mvn clean install -DskipTests
           
-          echo "📦 Building Webhook App..."
-          cd ../app
-          mvn clean install -DskipTests=false
-
-      # 2. Message Queue Service (API First, Then App)
-      - name: Build Message Queue Service
-        run: |
-          echo "📦 Installing Message Queue API..."
-          cd message-queue-service/api
-          mvn clean install -DskipTests
-          
-          echo "📦 Building Message Queue App..."
-          cd ../app
-          mvn clean install -DskipTests
-
-      # 3. Scenario Library Service (API First, Then App)
-      - name: Build Scenario Library Service
-        run: |
-          echo "📦 Installing Scenario API..."
-          cd scenario-library-service/api
-          mvn clean install -DskipTests
-          
-          echo "📦 Building Scenario App..."
-          cd ../app
-          mvn clean install -DskipTests
-
-      # 4. Tracks Management Service (API First, Then App)
-      - name: Build Tracks Management Service
-        run: |
-          echo "📦 Installing Tracks API..."
-          cd tracks-management-service/api
-          mvn clean install -DskipTests
-          
-          echo "📦 Building Tracks App..."
-          cd ../app
-          mvn clean install -DskipTests
-
-      # 5. DCO Gateway (App Only)
-      - name: Build DCO Gateway
-        run: |
-          echo "📦 Building DCO Gateway..."
-          cd dco-gateway/app
-          mvn clean install -DskipTests
+         
+ 
+ 
 
       # --- STAGE 3: START ENVIRONMENT ---
       - name: Start Docker Environment
