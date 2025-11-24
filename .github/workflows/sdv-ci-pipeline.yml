@@ -1,6 +1,5 @@
 name: SDV Developer Console CI
 
-# Trigger the pipeline on push or pull request to the 'main' branch
 on:
   push:
     branches: [ "main" ]
@@ -30,18 +29,62 @@ jobs:
 
       # --- STAGE 2: BUILD & UNIT TEST ---
       
-      # 1. Webhook Service: Run with tests ENABLED (-DskipTests=false)
-      # We build from the PARENT directory so it builds the 'api' dependency first
+      # 1. Webhook Service (With Tests)
+      # We explicitly build API first to ensure the dependency exists
       - name: Build & Test Webhook Service
         run: |
-          cd webhook-management-service
+          echo "📦 Installing Webhook API..."
+          cd webhook-management-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Webhook App..."
+          cd ../app
           mvn clean install -DskipTests=false
 
+      # 2. Message Queue Service (API First, Then App)
+      - name: Build Message Queue Service
+        run: |
+          echo "📦 Installing Message Queue API..."
+          cd message-queue-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Message Queue App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 3. Scenario Library Service (API First, Then App)
+      - name: Build Scenario Library Service
+        run: |
+          echo "📦 Installing Scenario API..."
+          cd scenario-library-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Scenario App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 4. Tracks Management Service (API First, Then App)
+      - name: Build Tracks Management Service
+        run: |
+          echo "📦 Installing Tracks API..."
+          cd tracks-management-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Tracks App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 5. DCO Gateway (App Only)
+      - name: Build DCO Gateway
+        run: |
+          echo "📦 Building DCO Gateway..."
+          cd dco-gateway/app
+          mvn clean install -DskipTests
 
       # --- STAGE 3: START ENVIRONMENT ---
       - name: Start Docker Environment
         run: |
-          # Using 'docker compose' (v2) syntax which is required for GitHub Actions
+          # Using 'docker compose' (v2) syntax
           docker compose up -d --build
           echo "⏳ Waiting 60s for services to stabilize..."
           sleep 60
@@ -60,7 +103,6 @@ jobs:
           done
 
       # --- STAGE 5: SEED DATABASE ---
-      # Critical Step: This fixes the missing 'webhook_deliveries' table issue
       - name: Seed Database
         run: |
           chmod +x seed-database.sh
