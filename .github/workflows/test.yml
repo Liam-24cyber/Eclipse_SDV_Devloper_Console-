@@ -295,9 +295,15 @@ jobs:
 
       - name: Setup Database & Refresh Webhook
         run: |
-          chmod +x seed-database.sh
-          ./seed-database.sh
-          echo " Restarting Webhook Service..."
+          if [ -f "./seed-database.sh" ]; then
+            echo "🌱 Seeding Database using script..."
+            chmod +x seed-database.sh
+            ./seed-database.sh
+          else
+            echo "⚠️ seed-database.sh not found. Skipping manual seeding step."
+          fi
+          
+          echo "🔄 Restarting Webhook Service..."
           docker compose restart webhook-management-service
           sleep 15
 
