@@ -152,6 +152,8 @@ services:
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
       - "5050:80"
+    networks:
+      - services
     volumes:
       - pgadmin-data:/var/lib/pgadmin
     depends_on:
@@ -267,6 +269,8 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
+    networks:
+      - services
     restart: unless-stopped
 
   # Prometheus Pushgateway for E2E test metrics
@@ -275,6 +279,8 @@ services:
     container_name: pushgateway
     ports:
       - "9091:9091"
+    networks:
+      - services
     restart: unless-stopped
 
   # Grafana for metrics visualization
@@ -287,6 +293,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
       - grafana-data:/var/lib/grafana
+    networks:
+      - services
     depends_on:
       - prometheus
     restart: unless-stopped

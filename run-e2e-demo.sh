@@ -451,22 +451,43 @@ echo -e "${CYAN}📋 Step 12: Pushing metrics to Prometheus...${NC}"
 END_TIME=$(date +%s)
 EXECUTION_TIME=$((END_TIME - START_TIME))
 
-# Push custom metrics to Prometheus Pushgateway (if available)
-METRICS_PAYLOAD="# E2E Demo Metrics
-sdv_e2e_scenarios_created_total $SCENARIO_COUNT
-sdv_e2e_simulations_total $SIMULATION_COUNT  
-sdv_e2e_webhook_deliveries_total $TOTAL_DELIVERIES
-sdv_e2e_execution_duration_seconds $EXECUTION_TIME
-sdv_e2e_test_success 1"
+# Push custom metrics to Prometheus Pushgateway
+echo -e "${CYAN}Preparing E2E metrics for Prometheus...${NC}"
 
-# Try to push to Prometheus Pushgateway
-if curl -s --connect-timeout 2 http://localhost:9091/metrics > /dev/null 2>&1; then
-    echo "$METRICS_PAYLOAD" | curl -s --data-binary @- http://localhost:9091/metrics/job/sdv-e2e-demo/instance/localhost > /dev/null
-    echo -e "${GREEN}✅ Metrics pushed to Prometheus Pushgateway${NC}"
+# Check if Pushgateway is available
+if curl -s --connect-timeout 2 http://localhost:9091/ > /dev/null 2>&1; then
+    echo -e "${GREEN}✅ Pushgateway is available${NC}"
+    
+    # Push each metric individually using Pushgateway format
+    cat <<EOF | curl -s --data-binary @- http://localhost:9091/metrics/job/sdv-e2e-demo/instance/localhost
+# TYPE sdv_e2e_test_success gauge
+# HELP sdv_e2e_test_success E2E test success indicator (1=success, 0=failure)
+sdv_e2e_test_success 1
+# TYPE sdv_e2e_execution_duration_seconds gauge
+# HELP sdv_e2e_execution_duration_seconds E2E test execution duration in seconds
+sdv_e2e_execution_duration_seconds $EXECUTION_TIME
+# TYPE sdv_e2e_scenarios_created_total gauge
+# HELP sdv_e2e_scenarios_created_total Total number of scenarios created
+sdv_e2e_scenarios_created_total $SCENARIO_COUNT
+# TYPE sdv_e2e_simulations_total gauge
+# HELP sdv_e2e_simulations_total Total number of simulations executed
+sdv_e2e_simulations_total $SIMULATION_COUNT
+# TYPE sdv_e2e_webhook_deliveries_total gauge
+# HELP sdv_e2e_webhook_deliveries_total Total number of webhook deliveries
+sdv_e2e_webhook_deliveries_total $TOTAL_DELIVERIES
+EOF
+    
+    echo -e "${GREEN}✅ E2E metrics pushed to Prometheus Pushgateway!${NC}"
+    echo -e "   ${CYAN}Metrics:${NC}"
+    echo -e "   - Test Success:          1"
+    echo -e "   - Execution Duration:    ${EXECUTION_TIME}s"
+    echo -e "   - Scenarios Created:     $SCENARIO_COUNT"
+    echo -e "   - Simulations Total:     $SIMULATION_COUNT"
+    echo -e "   - Webhook Deliveries:    $TOTAL_DELIVERIES"
 else
-    echo -e "${YELLOW}⚠️  Prometheus Pushgateway not available (port 9091)${NC}"
-    echo -e "   ${CYAN}Metrics would be:${NC}"
-    echo "$METRICS_PAYLOAD" | sed 's/^/   /'
+    echo -e "${RED}❌ Pushgateway not available (port 9091)${NC}"
+    echo -e "${YELLOW}⚠️  E2E metrics will NOT be visible in Grafana${NC}"
+    echo -e "   ${CYAN}To fix: ${NC}docker-compose up -d pushgateway"
 fi
 echo ""
 sleep 2
