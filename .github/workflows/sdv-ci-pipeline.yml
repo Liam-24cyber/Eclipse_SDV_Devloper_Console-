@@ -44,8 +44,8 @@ jobs:
           cd ../app
           mvn clean install -DskipTests=false
 
-      # 2. Message Queue Service
-      - name: Build Message Queue Service
+      # 2. Message Queue Service (UPDATED: Now runs Unit Tests!)
+      - name: Build & Test Message Queue Service
         run: |
           echo "📦 Installing Message Queue Parent POM..."
           cd message-queue-service
@@ -55,9 +55,10 @@ jobs:
           cd api
           mvn clean install -DskipTests
           
-          echo "📦 Building Message Queue App..."
+          echo "📦 Building & Testing Message Queue App..."
           cd ../app
-          mvn clean install -DskipTests
+          # Changed from -DskipTests to -DskipTests=false to run your new test
+          mvn clean install -DskipTests=false
 
       # 3. Scenario Library Service
       - name: Build Scenario Library Service
@@ -75,7 +76,6 @@ jobs:
           mvn clean install -DskipTests
 
       # 4. Tracks Management Service
-   
       - name: Build Tracks Management Service
         run: |
           echo "📦 Installing Tracks Parent POM..."
@@ -95,7 +95,6 @@ jobs:
           mvn clean install -DskipTests
 
       # 5. DCO Gateway
-     # 5. DCO Gateway
       - name: Build DCO Gateway
         run: |
           echo "📦 Installing Gateway Parent POM..."
@@ -110,7 +109,7 @@ jobs:
           cd ../app
           mvn clean install -DskipTests
 
-     # --- STAGE 3: BUILD UI (Next.js) ---
+      # --- STAGE 3: BUILD UI (Next.js) ---
       - name: Build Developer Console UI
         run: |
           echo "📦 Installing UI Dependencies..."
