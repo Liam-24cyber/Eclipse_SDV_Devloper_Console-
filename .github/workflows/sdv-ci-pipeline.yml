@@ -95,10 +95,19 @@ jobs:
           mvn clean install -DskipTests
 
       # 5. DCO Gateway
+     # 5. DCO Gateway
       - name: Build DCO Gateway
         run: |
-          echo "📦 Building DCO Gateway..."
-          cd dco-gateway/app
+          echo "📦 Installing Gateway Parent POM..."
+          cd dco-gateway
+          mvn -N clean install
+          
+          echo "📦 Installing Gateway API..."
+          cd api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Gateway App..."
+          cd ../app
           mvn clean install -DskipTests
 
       # --- STAGE 3: BUILD UI (Next.js) ---
