@@ -81,12 +81,13 @@ class ScenarioServiceTest {
   @Test
   void createScenario() throws Exception {
     String scenarioInput = "{\"name\":\"TEST\",\"description\":\"TEST\",\"lastModifiedBy\":\"TEST\",\"createdBy\":\"TEST\"}";
-    ScenarioEntity entity = ScenarioEntity.builder().name(TEST).description(TEST).createdBy(TEST).build();
+    ScenarioEntity entity = ScenarioEntity.builder().name(TEST).description(TEST).createdBy(TEST).type(TEST).build();
     com.tsystems.dco.model.ScenarioInput input = com.tsystems.dco.model.ScenarioInput.builder()
       .name(TEST).description(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
     given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.save(any())).willReturn(entity);
     given(fileStorageService.uploadFile(any(), any(), any())).willReturn(FileData.builder().build());
+    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     Scenario scenario = scenarioService.createScenario(scenarioInput, file);
     assertEquals(TEST, scenario.getName());
@@ -100,6 +101,7 @@ class ScenarioServiceTest {
       .name(TEST).description(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
     given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.save(any())).willThrow(DataNotFoundException.class);
+    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     assertThrows(DataNotFoundException.class, () -> scenarioService.createScenario(scenarioInput, file));
   }
@@ -140,11 +142,12 @@ class ScenarioServiceTest {
     com.tsystems.dco.model.ScenarioInput input = com.tsystems.dco.model.ScenarioInput.builder()
       .name(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
     FileEntity fileEntity = FileEntity.builder().fileKey(TEST).build();
-    ScenarioEntity scenarioEntity = ScenarioEntity.builder().id(uuid).name(TEST).file(fileEntity).createdBy(TEST).build();
+    ScenarioEntity scenarioEntity = ScenarioEntity.builder().id(uuid).name(TEST).file(fileEntity).createdBy(TEST).type(TEST).build();
     given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.findById(any())).willReturn(Optional.of(scenarioEntity));
     doNothing().when(fileStorageService).deleteFile(any());
     given(fileStorageService.uploadFile(any(), any(), any())).willReturn(FileData.builder().build());
+    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     scenarioService.scenarioUpdateById(uuid, scenarioInput, file);
     verify(scenarioRepository).save(any());
