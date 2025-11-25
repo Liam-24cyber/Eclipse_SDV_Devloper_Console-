@@ -75,6 +75,7 @@ jobs:
           mvn clean install -DskipTests
 
       # 4. Tracks Management Service
+   
       - name: Build Tracks Management Service
         run: |
           echo "📦 Installing Tracks Parent POM..."
@@ -83,6 +84,10 @@ jobs:
           
           echo "📦 Installing Tracks API..."
           cd api
+          mvn clean install -DskipTests
+          
+          echo "📦 Installing Tracks Database Module..."
+          cd ../app-database
           mvn clean install -DskipTests
           
           echo "📦 Building Tracks App..."
