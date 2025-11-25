@@ -7,6 +7,12 @@ on:
     branches: [ main, develop ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+  statuses: write
+
 jobs:
   test-scenario-library:
     name: Test Scenario Library Service
@@ -226,10 +232,18 @@ jobs:
     if: always()
     
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
       - name: Download all test results
         uses: actions/download-artifact@v4
         with:
           path: test-results
+      
+      - name: List downloaded files
+        run: |
+          echo "Downloaded test results:"
+          find test-results -name "*.xml" -type f || echo "No XML files found"
       
       - name: Publish Combined Test Report
         uses: dorny/test-reporter@v1
