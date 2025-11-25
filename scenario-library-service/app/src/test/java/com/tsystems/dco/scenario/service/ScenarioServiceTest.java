@@ -35,14 +35,14 @@ import com.tsystems.dco.scenario.repository.ScenarioRepository;
 import com.tsystems.dco.simulation.entity.SimulationEntity;
 import com.tsystems.dco.simulation.repository.SimulationRepository;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Arrays;
@@ -55,25 +55,26 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
 class ScenarioServiceTest {
 
-  @InjectMocks
-  private ScenarioServiceImpl scenarioService;
-  @Mock
+  @Autowired
+  private ScenarioService scenarioService;
+  
+  @MockBean
   private ScenarioRepository scenarioRepository;
-  @Mock
+  @MockBean
   private FileStorageService fileStorageService;
-  @Mock
-  private PageRequest pageRequest;
-  @Mock
+  @MockBean
   private SimulationRepository simulationRepository;
-  @Mock
+  @MockBean
   private Page<ScenarioEntity> scenarioEntityPage;
-  @Mock
+  @MockBean
+  private PageRequest pageRequest;
+
+  @Autowired
   private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
-  @Mock
-  private com.tsystems.dco.scenario.publisher.EventPublisher eventPublisher;
 
   private final String TEST = "TEST";
 
@@ -82,12 +83,8 @@ class ScenarioServiceTest {
   void createScenario() throws Exception {
     String scenarioInput = "{\"name\":\"TEST\",\"description\":\"TEST\",\"lastModifiedBy\":\"TEST\",\"createdBy\":\"TEST\"}";
     ScenarioEntity entity = ScenarioEntity.builder().name(TEST).description(TEST).createdBy(TEST).type(TEST).build();
-    com.tsystems.dco.model.ScenarioInput input = com.tsystems.dco.model.ScenarioInput.builder()
-      .name(TEST).description(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
-    given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.save(any())).willReturn(entity);
     given(fileStorageService.uploadFile(any(), any(), any())).willReturn(FileData.builder().build());
-    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     Scenario scenario = scenarioService.createScenario(scenarioInput, file);
     assertEquals(TEST, scenario.getName());
@@ -97,11 +94,7 @@ class ScenarioServiceTest {
   @Test
   void createScenarioWithException() throws Exception {
     String scenarioInput = "{\"name\":\"TEST\",\"description\":\"TEST\",\"lastModifiedBy\":\"TEST\",\"createdBy\":\"TEST\"}";
-    com.tsystems.dco.model.ScenarioInput input = com.tsystems.dco.model.ScenarioInput.builder()
-      .name(TEST).description(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
-    given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.save(any())).willThrow(DataNotFoundException.class);
-    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     assertThrows(DataNotFoundException.class, () -> scenarioService.createScenario(scenarioInput, file));
   }
@@ -139,15 +132,11 @@ class ScenarioServiceTest {
   void scenarioUpdateById() throws Exception {
     UUID uuid = UUID.randomUUID();
     String scenarioInput = "{\"name\":\"TEST\",\"type\":\"MQTT\",\"lastModifiedBy\":\"TEST\",\"createdBy\":\"TEST\"}";
-    com.tsystems.dco.model.ScenarioInput input = com.tsystems.dco.model.ScenarioInput.builder()
-      .name(TEST).createdBy(TEST).lastModifiedBy(TEST).build();
     FileEntity fileEntity = FileEntity.builder().fileKey(TEST).build();
     ScenarioEntity scenarioEntity = ScenarioEntity.builder().id(uuid).name(TEST).file(fileEntity).createdBy(TEST).type(TEST).build();
-    given(objectMapper.readValue(anyString(), eq(com.tsystems.dco.model.ScenarioInput.class))).willReturn(input);
     given(scenarioRepository.findById(any())).willReturn(Optional.of(scenarioEntity));
     doNothing().when(fileStorageService).deleteFile(any());
     given(fileStorageService.uploadFile(any(), any(), any())).willReturn(FileData.builder().build());
-    doNothing().when(eventPublisher).publishScenarioEvent(anyString(), anyString(), any());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());
     scenarioService.scenarioUpdateById(uuid, scenarioInput, file);
     verify(scenarioRepository).save(any());

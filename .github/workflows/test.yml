@@ -18,6 +18,30 @@ jobs:
     name: Test Scenario Library Service
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,9 +53,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
+      - name: Initialize Test Database
+        run: |
+          PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
+      
       - name: Run Scenario Library Tests
         working-directory: ./scenario-library-service
-        run: mvn clean test -B
+        run: mvn clean test -B -Dspring.profiles.active=test
         continue-on-error: true
       
       - name: Generate Test Report
@@ -55,6 +83,30 @@ jobs:
     name: Test Webhook Management Service
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -66,9 +118,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
+      - name: Initialize Test Database
+        run: |
+          PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
+      
       - name: Run Webhook Management Tests
         working-directory: ./webhook-management-service
-        run: mvn clean test -B
+        run: mvn clean test -B -Dspring.profiles.active=test
         continue-on-error: true
       
       - name: Generate Test Report
@@ -92,6 +148,30 @@ jobs:
     name: Test Message Queue Service
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -103,9 +183,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
+      - name: Initialize Test Database
+        run: |
+          PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
+      
       - name: Run Message Queue Tests
         working-directory: ./message-queue-service
-        run: mvn clean test -B
+        run: mvn clean test -B -Dspring.profiles.active=test
         continue-on-error: true
       
       - name: Generate Test Report
@@ -129,6 +213,30 @@ jobs:
     name: Test Tracks Management Service
     runs-on: ubuntu-latest
     
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: guest
+          RABBITMQ_DEFAULT_PASS: guest
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -140,9 +248,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
       
+      - name: Initialize Test Database
+        run: |
+          PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
+      
       - name: Run Tracks Management Tests
         working-directory: ./tracks-management-service
-        run: mvn clean test -B
+        run: mvn clean test -B -Dspring.profiles.active=test
       
       - name: Generate Test Report
         if: always()

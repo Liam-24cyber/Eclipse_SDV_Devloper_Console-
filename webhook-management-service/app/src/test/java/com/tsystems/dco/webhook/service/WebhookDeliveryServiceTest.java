@@ -31,11 +31,10 @@ import com.tsystems.dco.webhook.repository.WebhookRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
@@ -44,24 +43,26 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.mockito.ArgumentCaptor;
 
 /**
  * Unit tests for WebhookDeliveryService
  * Critical test cases for webhook delivery functionality
  */
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
 class WebhookDeliveryServiceTest {
 
-    @InjectMocks
+    @Autowired
     private WebhookDeliveryService webhookDeliveryService;
 
-    @Mock
+    @MockBean
     private WebhookRepository webhookRepository;
 
-    @Mock
+    @MockBean
     private WebhookDeliveryRepository webhookDeliveryRepository;
 
-    @Mock
+    @MockBean
     private RestTemplate restTemplate;
 
     private Webhook testWebhook;
