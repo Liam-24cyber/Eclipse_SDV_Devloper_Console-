@@ -110,7 +110,7 @@ jobs:
           cd ../app
           mvn clean install -DskipTests
 
-      # --- STAGE 3: BUILD UI (Next.js) ---
+     # --- STAGE 3: BUILD UI (Next.js) ---
       - name: Build Developer Console UI
         run: |
           echo "📦 Installing UI Dependencies..."
@@ -132,33 +132,26 @@ jobs:
       # --- STAGE 5: HEALTH CHECKS ---
       - name: Verify Service Health
         run: |
-          echo "Checking API Gateway..."
-          for i in {1..10}; do
-            if curl -s http://localhost:8080/actuator/health | grep "UP"; then
-              echo "✅ Gateway is UP"
-              break
-            fi
-            echo "zzZ Waiting for Gateway..."
-            sleep 5
-          done
+          chmod +x ci-health-check.sh
+          ./ci-health-check.sh
 
-      # --- STAGE 6: SEED DATABASE ---
-      - name: Seed Database
+      # --- STAGE 6: SETUP DATABASE & RESTART ---
+      - name: Setup Database & Refresh Webhook
         run: |
+          echo "🌱 Seeding Database..."
           chmod +x seed-database.sh
           ./seed-database.sh
+          
+          echo "🔄 Restarting Webhook Service to recognize new schema..."
+          docker compose restart webhook-management-service
+          sleep 15
 
-      # --- STAGE 7: E2E WORKFLOW ---
-      - name: Install Newman
-        run: npm install -g newman
-
-      - name: Run Postman E2E Tests
+      # --- STAGE 7: FUNCTIONAL TESTS (Visual Output) ---
+      - name: Run Functional E2E Tests
         run: |
-          if [ -f "E2E_Demo_API.postman_collection.json" ]; then
-            newman run E2E_Demo_API.postman_collection.json --reporters cli
-          else
-            echo "⚠️ Postman collection not found. Skipping E2E step for now."
-          fi
+          echo "🚀 Starting Functional Tests..."
+          chmod +x run-e2e-demo.sh
+          ./run-e2e-demo.sh
 
       # --- DEBUGGING ---
       - name: Dump Docker Logs (If Failure)
