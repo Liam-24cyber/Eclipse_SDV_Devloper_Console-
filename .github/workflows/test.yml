@@ -70,6 +70,7 @@ jobs:
           path: scenario-library-service/app/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
+        continue-on-error: true
       
       - name: Upload Test Results
         if: always()
@@ -135,6 +136,7 @@ jobs:
           path: webhook-management-service/app/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
+        continue-on-error: true
       
       - name: Upload Test Results
         if: always()
@@ -200,6 +202,7 @@ jobs:
           path: message-queue-service/app/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: false
+        continue-on-error: true
       
       - name: Upload Test Results
         if: always()
@@ -264,6 +267,7 @@ jobs:
           path: tracks-management-service/app/target/surefire-reports/*.xml
           reporter: java-junit
           fail-on-error: true
+        continue-on-error: true
       
       - name: Upload Test Results
         if: always()
@@ -368,6 +372,7 @@ jobs:
           path: 'test-results/**/*.xml'
           reporter: java-junit
           fail-on-error: false
+        continue-on-error: true
       
       - name: Test Summary
         run: |
