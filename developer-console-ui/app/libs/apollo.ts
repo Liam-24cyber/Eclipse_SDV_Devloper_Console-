@@ -2,10 +2,25 @@ import { ApolloClient, HttpLink, InMemoryCache } from '@apollo/client'
 import { setContext } from '@apollo/client/link/context';
 import getConfig from 'next/config';
 
+// Prefer a configured gateway URL so the UI works both locally and in Docker
+const { publicRuntimeConfig } = getConfig() || {};
+const runtimeEnv = typeof process !== 'undefined' ? process.env : undefined;
+const isBrowser = typeof window !== 'undefined';
+const browserGatewayBaseUrl = isBrowser
+  ? `${window.location.protocol}//${window.location.hostname}:8080`
+  : undefined;
+const gatewayBaseUrl =
+  browserGatewayBaseUrl ||
+  runtimeEnv?.NEXT_PUBLIC_DCO_GATEWAY_URL ||
+  runtimeEnv?.APP_DCO_GATEWAY_SERVICE_URL ||
+  publicRuntimeConfig?.url ||
+  'http://localhost:8080';
 
-const httpLink = new HttpLink({ uri: getConfig().publicRuntimeConfig.url + '/graphql', fetch: fetch });
+const graphqlUrl = `${gatewayBaseUrl.replace(/\/$/, '')}/graphql`;
 
-export const Link = getConfig().publicRuntimeConfig.url + '/graphql'
+const httpLink = new HttpLink({ uri: graphqlUrl, fetch });
+
+export const Link = graphqlUrl;
 
 const authLink = setContext((_, { headers }) => {
   // get the authentication token from local storage if it exists

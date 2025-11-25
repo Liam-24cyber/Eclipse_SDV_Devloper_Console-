@@ -1,0 +1,141 @@
+{
+	"info": {
+		"_postman_id": "sdv-e2e-simulation",
+		"name": "SDV E2E Simulation API",
+		"description": "Complete E2E testing collection for Software Defined Vehicle Developer Console",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "🚀 Run Complete E2E Simulation",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:9191/api/run-simulation",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9191",
+					"path": [
+						"api",
+						"run-simulation"
+					]
+				},
+				"description": "Triggers the complete E2E workflow:\n1. Create scenario\n2. Create simulation\n3. Publish to RabbitMQ\n4. Process webhooks\n5. Verify data flow\n\nExpected duration: 30-45 seconds"
+			},
+			"response": []
+		},
+		{
+			"name": "🩺 Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9191/health",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9191",
+					"path": [
+						"health"
+					]
+				},
+				"description": "Quick health check to verify the API server is running"
+			},
+			"response": []
+		},
+		{
+			"name": "📊 System Status",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9191/api/status",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9191",
+					"path": [
+						"api",
+						"status"
+					]
+				},
+				"description": "Check if all required Docker services (PostgreSQL, RabbitMQ) are running"
+			},
+			"response": []
+		},
+		{
+			"name": "🏁 Get Available Tracks",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9191/api/tracks",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9191",
+					"path": [
+						"api",
+						"tracks"
+					]
+				},
+				"description": "Retrieve list of available tracks from the database"
+			},
+			"response": []
+		},
+		{
+			"name": "📝 Create Scenario Only",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Postman Test Scenario\",\n  \"description\": \"Test scenario created from Postman\",\n  \"type\": \"CAN\"\n}"
+				},
+				"url": {
+					"raw": "http://localhost:9191/api/scenario/create",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9191",
+					"path": [
+						"api",
+						"scenario",
+						"create"
+					]
+				},
+				"description": "Create a single scenario without running the full simulation"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"exec": [
+					"// Set timeout for long-running requests",
+					"pm.timeout = 60000; // 60 seconds"
+				],
+				"type": "text/javascript"
+			}
+		}
+	]
+}

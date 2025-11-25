@@ -1,0 +1,39 @@
+app:
+  rest:
+    port: 0
+  probes:
+    port: 0
+  cors:
+    origins: "*"
+    headers: "*"
+  postgres:
+    host: localhost
+    port: 5432
+    database: testdb
+    username: test
+    password: test
+  username: testuser
+  password: testpass
+
+server:
+  port: ${app.rest.port}
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+  jpa:
+    show-sql: false
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  server:
+    port: ${app.probes.port}
+  endpoints:
+    enabled-by-default: false

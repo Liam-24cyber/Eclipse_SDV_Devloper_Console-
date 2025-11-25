@@ -1,0 +1,42 @@
+app:
+  rest:
+    port: 0
+  probes:
+    port: 0
+  cors:
+    origins: "*"
+    headers: "*"
+  postgres:
+    host: localhost
+    port: 5432
+    database: testdb
+    username: test
+    password: test
+  storage:
+    url: http://localhost:9000
+    access.key: testkey
+    secret.key: testsecret
+    bucket: test-bucket
+  username: testuser
+  password: testpass
+
+track-service:
+  url: http://localhost:8081
+
+server:
+  port: ${app.rest.port}
+
+spring:
+  jpa:
+    show-sql: false
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+management:
+  server:
+    port: ${app.probes.port}
+  endpoints:
+    enabled-by-default: false

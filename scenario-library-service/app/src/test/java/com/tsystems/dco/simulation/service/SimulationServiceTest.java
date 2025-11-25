@@ -34,14 +34,14 @@ import com.tsystems.dco.simulation.entity.SimulationEntity;
 import com.tsystems.dco.simulation.repository.SimulationRepository;
 import feign.FeignException;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,22 +54,24 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest
+@ActiveProfiles("test")
 class SimulationServiceTest {
 
-  @InjectMocks
-  private SimulationServiceImpl simulationService;
-  @Mock
+  @Autowired
+  private SimulationService simulationService;
+  
+  @MockBean
   private ScenarioRepository scenarioRepository;
-  @Mock
+  @MockBean
   private SimulationRepository simulationRepository;
-  @Mock
+  @MockBean
   private CampaignService campaignService;
-  @Mock
+  @MockBean
   private TrackRepositoryApiClient trackRepositoryApiClient;
-  @Mock
+  @MockBean
   private Page<SimulationEntity> page;
-  @Mock
+  @MockBean
   private ResponseEntity<List<Track>> trackResponseEntity;
   private final String TEST = "TEST";
 
