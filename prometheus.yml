@@ -27,6 +27,13 @@ scrape_configs:
     metrics_path: '/management/prometheus'
     scrape_interval: 30s
 
+  # E2E Test Metrics (Pushgateway)
+  - job_name: 'sdv-e2e-tests'
+    static_configs:
+      - targets: ['pushgateway:9091']
+    scrape_interval: 5s
+    honor_labels: true
+
   # Message Queue Service
   - job_name: 'message-queue-service'
     static_configs:

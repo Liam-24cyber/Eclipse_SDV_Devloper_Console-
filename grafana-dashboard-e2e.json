@@ -1,0 +1,125 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "SDV E2E Test Dashboard",
+    "tags": ["sdv", "e2e", "testing"],
+    "style": "dark",
+    "timezone": "",
+    "panels": [
+      {
+        "id": 1,
+        "title": "E2E Test Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sdv_e2e_test_success",
+            "legendFormat": "Success Rate"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Execution Duration",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sdv_e2e_execution_duration_seconds",
+            "legendFormat": "Duration (seconds)"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "s",
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 30},
+                {"color": "red", "value": 60}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Scenarios Created Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "increase(sdv_e2e_scenarios_created_total[5m])",
+            "legendFormat": "Scenarios/5min"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Webhook Deliveries",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sdv_e2e_webhook_deliveries_total",
+            "legendFormat": "Total Deliveries"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "Simulations Created",
+        "type": "timeseries", 
+        "targets": [
+          {
+            "expr": "sdv_e2e_simulations_total",
+            "legendFormat": "Total Simulations"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "5s"
+  }
+}

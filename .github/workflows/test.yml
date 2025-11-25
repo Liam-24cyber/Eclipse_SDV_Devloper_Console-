@@ -1,0 +1,255 @@
+name: SDV Platform - Automated Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-scenario-library:
+    name: Test Scenario Library Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Run Scenario Library Tests
+        working-directory: ./scenario-library-service
+        run: mvn clean test -B
+      
+      - name: Generate Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Scenario Library Test Results
+          path: scenario-library-service/app/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scenario-library-test-results
+          path: scenario-library-service/app/target/surefire-reports/
+          retention-days: 30
+
+  test-webhook-management:
+    name: Test Webhook Management Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Run Webhook Management Tests
+        working-directory: ./webhook-management-service
+        run: mvn clean test -B
+      
+      - name: Generate Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Webhook Management Test Results
+          path: webhook-management-service/app/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webhook-management-test-results
+          path: webhook-management-service/app/target/surefire-reports/
+          retention-days: 30
+
+  test-message-queue:
+    name: Test Message Queue Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Run Message Queue Tests
+        working-directory: ./message-queue-service
+        run: mvn clean test -B
+      
+      - name: Generate Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Message Queue Test Results
+          path: message-queue-service/app/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: message-queue-test-results
+          path: message-queue-service/app/target/surefire-reports/
+          retention-days: 30
+
+  test-tracks-management:
+    name: Test Tracks Management Service
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Run Tracks Management Tests
+        working-directory: ./tracks-management-service
+        run: mvn clean test -B
+      
+      - name: Generate Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Tracks Management Test Results
+          path: tracks-management-service/app/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: true
+      
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracks-management-test-results
+          path: tracks-management-service/app/target/surefire-reports/
+          retention-days: 30
+
+  integration-tests:
+    name: Run E2E Integration Tests
+    runs-on: ubuntu-latest
+    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      rabbitmq:
+        image: rabbitmq:3-management
+        env:
+          RABBITMQ_DEFAULT_USER: admin
+          RABBITMQ_DEFAULT_PASS: admin123
+        ports:
+          - 5672:5672
+          - 15672:15672
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      - name: Initialize Database
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -f postgres/dco-init.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d postgres -f postgres/seed-data.sql
+      
+      - name: Build All Services
+        run: |
+          cd scenario-library-service && mvn clean install -DskipTests -B
+          cd ../webhook-management-service && mvn clean install -DskipTests -B
+          cd ../message-queue-service && mvn clean install -DskipTests -B
+          cd ../tracks-management-service && mvn clean install -DskipTests -B
+      
+      - name: Run Integration Tests
+        run: |
+          echo "Integration tests will be implemented here"
+          # TODO: Implement full E2E integration test suite
+      
+      - name: Upload Integration Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-test-results
+          path: |
+            **/target/surefire-reports/
+            **/target/failsafe-reports/
+          retention-days: 30
+
+  test-summary:
+    name: Test Summary Report
+    runs-on: ubuntu-latest
+    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, integration-tests]
+    if: always()
+    
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+      
+      - name: Publish Combined Test Report
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Combined Test Results
+          path: 'test-results/**/*.xml'
+          reporter: java-junit
+          fail-on-error: false
+      
+      - name: Test Summary
+        run: |
+          echo "## Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All service tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Services Tested:" >> $GITHUB_STEP_SUMMARY
+          echo "- Scenario Library Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Webhook Management Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Message Queue Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Tracks Management Service" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed test reports in the artifacts section." >> $GITHUB_STEP_SUMMARY

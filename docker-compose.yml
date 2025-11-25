@@ -15,8 +15,10 @@ services:
     ports:
     - "3000:3000"
     environment:
-      APP_DCO_GATEWAY_SERVICE_URL: http://localhost:8080
+      APP_DCO_GATEWAY_SERVICE_URL: http://dco-gateway:8080
       NEXT_PUBLIC_FILE: http://minio:9000/dco-scenario-library-service/scenario/fe7f4c94-c21a-4a4b-a3fc-c1b309b0f5f0/files/software_package.txt
+    networks:
+      - services
     restart: unless-stopped
     depends_on:
       - dco-gateway
@@ -35,6 +37,8 @@ services:
       SCENARIO_LIBRARY_URL: scenario-library-service:8082
       REDIS_HOST: redis
       REDIS_PORT: 6379
+    networks:
+      - services
     depends_on:
       - redis
     restart: unless-stopped
@@ -55,6 +59,8 @@ services:
       APP_POSTGRES_USERNAME: postgres
       APP_POSTGRES_PASSWORD: postgres
       SCENARIO-SERVICE_URL: scenario-library-service:8082
+    networks:
+      - services
     restart: unless-stopped
     depends_on:
       postgres:
@@ -83,6 +89,8 @@ services:
       APP_POSTGRES_PASSWORD: postgres
       TRACK-SERVICE_URL: tracks-management-service:8081
       MESSAGE_QUEUE_SERVICE_URL: http://message-queue-service:8083
+    networks:
+      - services
     restart: unless-stopped
     depends_on:
       postgres:
@@ -107,6 +115,8 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
       MINIO_SERVER_URL: http://localhost:9000
+    networks:
+      - services
     volumes:
       - minio-data:/data
     restart: unless-stopped  
@@ -123,6 +133,8 @@ services:
       POSTGRES_DB: postgres
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    networks:
+      - services
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -157,6 +169,8 @@ services:
     ports:
       - "5672:5672"    # AMQP port
       - "15672:15672"  # Management UI port
+    networks:
+      - services
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     healthcheck:
@@ -173,6 +187,8 @@ services:
     ports:
       - "6379:6379"
     command: redis-server --appendonly yes
+    networks:
+      - services
     volumes:
       - redis-data:/data
     restart: unless-stopped
@@ -192,6 +208,8 @@ services:
       SPRING_RABBITMQ_PORT: 5672
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin123
+    networks:
+      - services
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8083/actuator/health"]
       interval: 10s
@@ -224,6 +242,8 @@ services:
       SPRING_RABBITMQ_USERNAME: admin
       SPRING_RABBITMQ_PASSWORD: admin123
       MESSAGE_QUEUE_SERVICE_URL: message-queue-service:8083
+    networks:
+      - services
     restart: unless-stopped
     depends_on:
       postgres:
@@ -247,6 +267,14 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--web.console.libraries=/etc/prometheus/console_libraries'
       - '--web.console.templates=/etc/prometheus/consoles'
+    restart: unless-stopped
+
+  # Prometheus Pushgateway for E2E test metrics
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: pushgateway
+    ports:
+      - "9091:9091"
     restart: unless-stopped
 
   # Grafana for metrics visualization

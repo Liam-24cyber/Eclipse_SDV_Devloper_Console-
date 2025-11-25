@@ -1,146 +1,44 @@
-# Build artifacts
-*.class
-*.jar
-!gradle-wrapper.jar
-*.war
-*.ear
-target/
-build/
-out/
-.gradle/
+# Maven build outputs
+**/target/
+**/dependency-reduced-pom.xml
 
-# IDE
-.idea/
+# Node.js
+**/node_modules/
+**/dist/
+**/.next/
+**/out/
+
+# IDE files
+**/.idea/
+**/.vscode/
+**/.DS_Store
 *.iml
-.vscode/
 *.swp
 *.swo
-*~
 
-# Node
-node_modules/
-.next/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+# Test reports (keep in gitignore, upload as artifacts in CI/CD)
+**/test-reports*/
+**/surefire-reports/
+**/failsafe-reports/
 
-# Environment
-.env
-.env.local
-.env.*.local
-*.env
-!.env.example
+# Logs
+**/*.log
+**/logs/
 
-# OS
-.DS_Store
-Thumbs.db
+# Environment files
+**/.env
+**/.env.local
+**/minio_keys.env
 
-# Backup files
-*.backup
-*.backup.*
-*.bak
-*.old
-*_backup.*
-*.clean.*
-*.simple.*
+# Temporary files
+**/*.tmp
+**/*.temp
+**/.cache/
 
-# Test files
-*.test.js
-*.test.ts
+# Docker volumes (if any)
+**/volumes/
 
-# Logs and test execution files
-*.log
-test-execution*.log
-e2e-api.log
-build.log
-rebuild*.log
-webhook-deliveries.log
+# OS files
+**/.DS_Store
+**/Thumbs.db
 
-# Test documentation
-TEST_*.md
-*TEST*.md
-TESTING_*.md
-
-# Demo documentation
-DEMO_*.md
-demo-script.md
-POSTMAN_*.md
-
-# Fix and issue documentation
-FIX_*.md
-*FIX*.md
-CRITICAL_*.md
-COMPLETE_*.md
-*ISSUE*.md
-*BLOCKER*.md
-
-# Status and analysis documentation
-*_STATUS.md
-*_ANALYSIS.md
-DEPLOYMENT_STATUS.md
-INFRASTRUCTURE_STATUS.md
-RABBITMQ_*.md
-REDIS_*.md
-PROMETHEUS_*.md
-
-# Quick references and guides
-QUICK_*.md
-*_QUICK_*.md
-ALL_URLS.md
-SERVICE_URLS.md
-LOGIN_CREDENTIALS.md
-LOCAL_ENDPOINTS.md
-HOW_TO_*.md
-STARTUP_*.md
-RESTART_*.md
-SEED_*.md
-
-# Workflow documentation
-E2E_*.md
-*WORKFLOW*.md
-EVENT_FLOW*.md
-*_FLOW_*.md
-
-# Other temporary documentation
-DO_THIS_NOW.md
-NEXT_STEPS.md
-FILES_*.md
-READY_*.md
-SESSION_*.md
-ROOT_CAUSE*.md
-DOCUMENTATION_INDEX.md
-*DEPLOYMENT.md
-DATA_PERSISTENCE*.md
-VOLUME_*.md
-AUTO_SEEDING*.md
-API_VERIFICATION*.md
-*_SUMMARY.md
-*_REPORT.md
-
-# Test scripts (but keep essential startup scripts)
-execute-test-plan.sh
-deploy-and-test-webhooks.sh
-publish-test-event.sh
-seed-test-webhook.sh
-check-demo-readiness.sh
-test-all-endpoints.sh
-open-demo-tabs.sh
-check-status.sh
-fix-*.sh
-purge-*.sh
-
-# Keep these essential scripts - DO NOT IGNORE:
-!start-all-services.sh
-!run-e2e-demo.sh
-!start-e2e-api.sh
-!10-build-script.sh
-!20-deploy-script.sh
-!30-destroy-script.sh
-
-# Test infrastructure
-e2e-api-server.js
-mock-webhook-server.js
-E2E_Demo_API.postman_collection.json
-
-test-*.sh
