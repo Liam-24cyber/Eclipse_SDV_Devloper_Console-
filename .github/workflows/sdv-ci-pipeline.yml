@@ -32,19 +32,27 @@ jobs:
       # 1. Webhook Service (With Tests)
       - name: Build & Test Webhook Service
         run: |
+          echo "📦 Installing Webhook Parent POM..."
+          cd webhook-management-service
+          mvn -N clean install
+          
           echo "📦 Installing Webhook API..."
-          cd webhook-management-service/api
+          cd api
           mvn clean install -DskipTests
           
-          echo "📦 Building Webhook App..."
+          echo "📦 Building & Testing Webhook App..."
           cd ../app
           mvn clean install -DskipTests=false
 
       # 2. Message Queue Service
       - name: Build Message Queue Service
         run: |
+          echo "📦 Installing Message Queue Parent POM..."
+          cd message-queue-service
+          mvn -N clean install
+          
           echo "📦 Installing Message Queue API..."
-          cd message-queue-service/api
+          cd api
           mvn clean install -DskipTests
           
           echo "📦 Building Message Queue App..."
@@ -54,8 +62,12 @@ jobs:
       # 3. Scenario Library Service
       - name: Build Scenario Library Service
         run: |
+          echo "📦 Installing Scenario Parent POM..."
+          cd scenario-library-service
+          mvn -N clean install
+          
           echo "📦 Installing Scenario API..."
-          cd scenario-library-service/api
+          cd api
           mvn clean install -DskipTests
           
           echo "📦 Building Scenario App..."
@@ -65,8 +77,12 @@ jobs:
       # 4. Tracks Management Service
       - name: Build Tracks Management Service
         run: |
+          echo "📦 Installing Tracks Parent POM..."
+          cd tracks-management-service
+          mvn -N clean install
+          
           echo "📦 Installing Tracks API..."
-          cd tracks-management-service/api
+          cd api
           mvn clean install -DskipTests
           
           echo "📦 Building Tracks App..."
@@ -94,7 +110,9 @@ jobs:
       - name: Start Docker Environment
         run: |
           # Using 'docker compose' (v2) syntax
-          docker compose up -d --build
+          # We use --no-cache to force it to see the new files we just built
+          docker compose build --no-cache
+          docker compose up -d
           echo "⏳ Waiting 60s for services to stabilize..."
           sleep 60
 
