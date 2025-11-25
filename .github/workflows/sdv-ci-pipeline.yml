@@ -115,8 +115,7 @@ jobs:
         run: |
           echo "📦 Installing UI Dependencies..."
           cd developer-console-ui/app
-          npm install
-          
+          npm install --legacy-peer-deps
           echo "📦 Building Next.js App..."
           npm run build
 
