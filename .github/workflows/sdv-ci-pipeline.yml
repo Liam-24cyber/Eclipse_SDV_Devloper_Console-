@@ -22,26 +22,75 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Set up Node.js (for Newman)
+      - name: Set up Node.js (for UI Build & Newman)
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '16'
 
-      # --- STAGE 2: BUILD & UNIT TEST ---
+      # --- STAGE 2: BUILD & UNIT TEST (JAVA) ---
       
       # 1. Webhook Service (With Tests)
-      # We explicitly build API first to ensure the dependency exists
       - name: Build & Test Webhook Service
         run: |
           echo "📦 Installing Webhook API..."
-          cd webhook-management-service
+          cd webhook-management-service/api
           mvn clean install -DskipTests
           
-         
- 
- 
+          echo "📦 Building Webhook App..."
+          cd ../app
+          mvn clean install -DskipTests=false
 
-      # --- STAGE 3: START ENVIRONMENT ---
+      # 2. Message Queue Service
+      - name: Build Message Queue Service
+        run: |
+          echo "📦 Installing Message Queue API..."
+          cd message-queue-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Message Queue App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 3. Scenario Library Service
+      - name: Build Scenario Library Service
+        run: |
+          echo "📦 Installing Scenario API..."
+          cd scenario-library-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Scenario App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 4. Tracks Management Service
+      - name: Build Tracks Management Service
+        run: |
+          echo "📦 Installing Tracks API..."
+          cd tracks-management-service/api
+          mvn clean install -DskipTests
+          
+          echo "📦 Building Tracks App..."
+          cd ../app
+          mvn clean install -DskipTests
+
+      # 5. DCO Gateway
+      - name: Build DCO Gateway
+        run: |
+          echo "📦 Building DCO Gateway..."
+          cd dco-gateway/app
+          mvn clean install -DskipTests
+
+      # --- STAGE 3: BUILD UI (Next.js) ---
+      - name: Build Developer Console UI
+        run: |
+          echo "📦 Installing UI Dependencies..."
+          cd developer-console-ui/app
+          npm install
+          
+          echo "📦 Building Next.js App..."
+          npm run build
+
+      # --- STAGE 4: START ENVIRONMENT ---
       - name: Start Docker Environment
         run: |
           # Using 'docker compose' (v2) syntax
@@ -49,7 +98,7 @@ jobs:
           echo "⏳ Waiting 60s for services to stabilize..."
           sleep 60
 
-      # --- STAGE 4: HEALTH CHECKS ---
+      # --- STAGE 5: HEALTH CHECKS ---
       - name: Verify Service Health
         run: |
           echo "Checking API Gateway..."
@@ -62,13 +111,13 @@ jobs:
             sleep 5
           done
 
-      # --- STAGE 5: SEED DATABASE ---
+      # --- STAGE 6: SEED DATABASE ---
       - name: Seed Database
         run: |
           chmod +x seed-database.sh
           ./seed-database.sh
 
-      # --- STAGE 6: E2E WORKFLOW ---
+      # --- STAGE 7: E2E WORKFLOW ---
       - name: Install Newman
         run: npm install -g newman
 
