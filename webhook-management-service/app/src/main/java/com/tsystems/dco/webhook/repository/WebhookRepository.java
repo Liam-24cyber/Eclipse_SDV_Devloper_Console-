@@ -31,5 +31,7 @@ public interface WebhookRepository extends JpaRepository<Webhook, UUID> {
 
     boolean existsByName(String name);
 
+    long countByIsActive(Boolean isActive);
+
     org.springframework.data.domain.Page<Webhook> findByNameContainingIgnoreCase(String name, org.springframework.data.domain.Pageable pageable);
 }

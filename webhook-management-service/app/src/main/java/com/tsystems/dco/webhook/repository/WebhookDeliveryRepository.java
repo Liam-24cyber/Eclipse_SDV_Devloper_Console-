@@ -18,7 +18,7 @@ public interface WebhookDeliveryRepository extends JpaRepository<WebhookDelivery
     Page<WebhookDelivery> findByWebhookIdOrderByCreatedAtDesc(UUID webhookId, Pageable pageable);
 
     List<WebhookDelivery> findByStatusAndNextRetryAtBefore(
-            WebhookDelivery.DeliveryStatus status, 
+            WebhookDelivery.DeliveryStatus status,
             OffsetDateTime cutoffTime
     );
 
@@ -32,7 +32,7 @@ public interface WebhookDeliveryRepository extends JpaRepository<WebhookDelivery
     Long countByWebhookIdAndStatus(@Param("webhookId") UUID webhookId, @Param("status") WebhookDelivery.DeliveryStatus status);
 
     List<WebhookDelivery> findByEventTypeAndStatusOrderByCreatedAtDesc(
-            String eventType, 
+            String eventType,
             WebhookDelivery.DeliveryStatus status
     );
 
@@ -41,4 +41,6 @@ public interface WebhookDeliveryRepository extends JpaRepository<WebhookDelivery
             @Param("cutoffTime") OffsetDateTime cutoffTime,
             @Param("statuses") List<WebhookDelivery.DeliveryStatus> statuses
     );
+
+    long countByStatus(WebhookDelivery.DeliveryStatus status);
 }

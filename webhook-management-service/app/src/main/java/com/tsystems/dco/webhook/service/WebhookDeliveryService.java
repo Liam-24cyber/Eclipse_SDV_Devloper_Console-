@@ -56,6 +56,7 @@ public class WebhookDeliveryService {
     private final WebhookDeliveryRepository webhookDeliveryRepository;
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
+    private final com.tsystems.dco.webhook.metrics.WebhookMetricsService metricsService;
 
     @Async
     public void deliverEventToWebhooks(String eventId, String eventType, Map<String, Object> eventData) {
@@ -96,6 +97,8 @@ public class WebhookDeliveryService {
     }
 
     private void attemptDelivery(WebhookDelivery delivery, Webhook webhook, Map<String, Object> eventData) {
+        io.micrometer.core.instrument.Timer.Sample timerSample = metricsService.startDeliveryTimer();
+        
         try {
             String payload = objectMapper.writeValueAsString(eventData);
             
@@ -142,6 +145,9 @@ public class WebhookDeliveryService {
             delivery.setResponseBody(response.getBody());
             delivery.setResponseTime((int) responseTime);
             
+            // Record HTTP status code metric
+            metricsService.recordHttpStatusCode(response.getStatusCode().value(), delivery.getEventType());
+            
             if (response.getStatusCode().is2xxSuccessful()) {
                 delivery.setStatus(WebhookDelivery.DeliveryStatus.SUCCESS);
                 delivery.setCompletedAt(OffsetDateTime.now());
@@ -152,10 +158,18 @@ public class WebhookDeliveryService {
                 webhook.setLastDeliveryAt(OffsetDateTime.now());
                 webhookRepository.save(webhook);
                 
+                // Record success metrics
+                metricsService.incrementDeliverySuccess(delivery.getEventType());
+                metricsService.recordDeliveryDuration(timerSample, delivery.getEventType(), "success");
+                
                 log.info("Successfully delivered event {} to webhook {}", delivery.getEventId(), webhook.getName());
             } else {
                 delivery.setStatus(WebhookDelivery.DeliveryStatus.FAILED);
                 delivery.setErrorMessage("HTTP " + response.getStatusCode() + ": " + response.getBody());
+                
+                // Record failure metrics
+                metricsService.incrementDeliveryFailed(delivery.getEventType(), "http_error");
+                metricsService.recordDeliveryDuration(timerSample, delivery.getEventType(), "failed");
                 
                 // Update webhook statistics
                 webhook.setTotalDeliveries(webhook.getTotalDeliveries() + 1);
@@ -182,6 +196,11 @@ public class WebhookDeliveryService {
             delivery.setAttemptCount(delivery.getAttemptCount() + 1);
             delivery.setStatus(WebhookDelivery.DeliveryStatus.FAILED);
             delivery.setErrorMessage(e.getMessage());
+            
+            // Record failure metrics
+            String errorType = e.getClass().getSimpleName();
+            metricsService.incrementDeliveryFailed(delivery.getEventType(), errorType);
+            metricsService.recordDeliveryDuration(timerSample, delivery.getEventType(), "failed");
             
             // Update webhook statistics
             webhook.setTotalDeliveries(webhook.getTotalDeliveries() + 1);

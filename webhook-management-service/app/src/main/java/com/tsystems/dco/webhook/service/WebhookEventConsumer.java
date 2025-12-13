@@ -25,6 +25,8 @@ package com.tsystems.dco.webhook.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tsystems.dco.config.RabbitMQConfig;
+import com.tsystems.dco.webhook.metrics.WebhookMetricsService;
+import io.micrometer.core.instrument.Timer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -33,85 +35,96 @@ import org.springframework.stereotype.Service;
 import java.util.Map;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class WebhookEventConsumer {
 
     private final WebhookDeliveryService webhookDeliveryService;
-    private final ObjectMapper objectMapper;
+    private final WebhookMetricsService metricsService;
 
-    @RabbitListener(queues = RabbitMQConfig.SCENARIO_EVENTS_QUEUE)
-    public void handleScenarioEvent(String eventDataJson) {
+    public WebhookEventConsumer(WebhookDeliveryService webhookDeliveryService, 
+                                WebhookMetricsService metricsService) {
+        this.webhookDeliveryService = webhookDeliveryService;
+        this.metricsService = metricsService;
+        System.out.println("=== WebhookEventConsumer bean created ===");
+        log.info("WebhookEventConsumer initialized and ready to listen for events");
+    }    @RabbitListener(queues = RabbitMQConfig.SCENARIO_EVENTS_QUEUE)
+    public void handleScenarioEvent(Map<String, Object> eventData) {
+        Timer.Sample sample = metricsService.startEventProcessingTimer();
+        
         try {
-            log.info("Received scenario event (raw): {}", eventDataJson);
-            
-            // Parse JSON to Map
-            @SuppressWarnings("unchecked")
-            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
-            log.info("Parsed scenario event: {}", eventData);
+            log.info("Received scenario event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
             
             if (eventType != null && eventId != null) {
+                metricsService.incrementEventsReceived(eventType);
                 log.info("Processing event {} of type {}", eventId, eventType);
                 webhookDeliveryService.deliverEventToWebhooks(eventId, eventType, eventData);
+                metricsService.recordEventProcessingDuration(sample, eventType);
             } else {
                 log.warn("Invalid event data - missing eventType or eventId: {}", eventData);
             }
             
         } catch (Exception e) {
-            log.error("Error processing scenario event: {}", eventDataJson, e);
+            log.error("Error processing scenario event", e);
+            if (eventData.get("eventType") != null) {
+                metricsService.recordEventProcessingDuration(sample, (String) eventData.get("eventType"));
+            }
         }
     }
 
     @RabbitListener(queues = RabbitMQConfig.TRACK_EVENTS_QUEUE)
-    public void handleTrackEvent(String eventDataJson) {
+    public void handleTrackEvent(Map<String, Object> eventData) {
+        Timer.Sample sample = metricsService.startEventProcessingTimer();
+        
         try {
-            log.info("Received track event (raw): {}", eventDataJson);
-            
-            // Parse JSON to Map
-            @SuppressWarnings("unchecked")
-            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
-            log.info("Parsed track event: {}", eventData);
+            log.info("Received track event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
             
             if (eventType != null && eventId != null) {
+                metricsService.incrementEventsReceived(eventType);
                 log.info("Processing event {} of type {}", eventId, eventType);
                 webhookDeliveryService.deliverEventToWebhooks(eventId, eventType, eventData);
+                metricsService.recordEventProcessingDuration(sample, eventType);
             } else {
                 log.warn("Invalid event data - missing eventType or eventId: {}", eventData);
             }
             
         } catch (Exception e) {
-            log.error("Error processing track event: {}", eventDataJson, e);
+            log.error("Error processing track event", e);
+            if (eventData.get("eventType") != null) {
+                metricsService.recordEventProcessingDuration(sample, (String) eventData.get("eventType"));
+            }
         }
     }
 
-    @RabbitListener(queues = RabbitMQConfig.SIMULATION_EVENTS_QUEUE) 
-    public void handleSimulationEvent(String eventDataJson) {
+    @RabbitListener(queues = RabbitMQConfig.SIMULATION_EVENTS_QUEUE)
+    public void handleSimulationEvent(Map<String, Object> eventData) {
+        Timer.Sample sample = metricsService.startEventProcessingTimer();
+        
         try {
-            log.info("Received simulation event (raw): {}", eventDataJson);
-            
-            // Parse JSON to Map
-            @SuppressWarnings("unchecked")
-            Map<String, Object> eventData = objectMapper.readValue(eventDataJson, Map.class);
-            log.info("Parsed simulation event: {}", eventData);
+            log.info("Received simulation event: {}", eventData);
             
             String eventType = (String) eventData.get("eventType");
             String eventId = (String) eventData.get("eventId");
             
             if (eventType != null && eventId != null) {
+                metricsService.incrementEventsReceived(eventType);
                 log.info("Processing event {} of type {}", eventId, eventType);
                 webhookDeliveryService.deliverEventToWebhooks(eventId, eventType, eventData);
+                metricsService.recordEventProcessingDuration(sample, eventType);
             } else {
                 log.warn("Invalid event data - missing eventType or eventId: {}", eventData);
             }
             
         } catch (Exception e) {
-            log.error("Error processing simulation event: {}", eventDataJson, e);
+            log.error("Error processing simulation event", e);
+            if (eventData.get("eventType") != null) {
+                metricsService.recordEventProcessingDuration(sample, (String) eventData.get("eventType"));
+            }
         }
     }
 }
