@@ -1,10 +1,17 @@
 import { Box, Button, Flex, Headline, Icon, Spacer, StatusMessage, Value } from "@dco/sdv-ui"
 import { useStoreState } from "easy-peasy"
 import {  useRouter } from "next/router";
+import { useEffect } from "react";
 import Layout from "../../components/layout/layout";
+import { logoutUser } from "../../services/credentials.service";
 export function Logout() {
     const invert = useStoreState((state: any) => state.invert)
     const router=useRouter();
+
+    useEffect(() => {
+        logoutUser();
+    }, []);
+
     return (
         <Layout>
             <Box fullHeight invert={invert} variant='high' padding="large">
@@ -20,10 +27,12 @@ export function Logout() {
                             </Box>
                             <Box variant="body" transparency="high" padding="large" >
                                 <StatusMessage variant="success" noIcon>
-                                    You have been successfully logged out
+                                    You have been successfully logged out.
                                 </StatusMessage>
+                                <Spacer />
+                                <Value>Use the quick login with <b>developer</b> / <b>password</b> or any dummy account.</Value>
                                 <Spacer space={4}></Spacer>
-                                <Button width="compact" data-testId="loginBtn" onClick={() => { router.push('login')}}>Login</Button>
+                                <Button width="compact" data-testid="loginBtn" onClick={() => { router.push('login')}}>Login</Button>
                             </Box>
                         </Flex.Item>
                         <Flex.Item>

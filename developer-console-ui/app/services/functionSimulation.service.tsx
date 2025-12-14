@@ -1,7 +1,8 @@
 import router from "next/router";
-import {  Link } from '../libs/apollo'
+import { Link } from '../libs/apollo'
 import { ClearAllTypes, RawDataSimType } from "../types";
 import { GET_SIMULATIONS } from "./queries";
+import { createApprovalRequest } from "./approvals.service";
 // Simulation data start****
 export const simRowData = (rawData: RawDataSimType) =>
   rawData?.data?.simulationReadByQuery?.content?.map((item: any) => {
@@ -157,8 +158,7 @@ export const getSimData = async (pageNo: number) => {
 }
 //  Simulation data end****
 
-export function launchSimulation(variable: any, createSimulation: Function, setVariable: any) {
-  // Filter checked scenarios and tracks, extracting just the ID strings
+export function prepareSimulationInput(variable: any, setVariable: any) {
   const selectedScenarios = variable.scenario
     .filter((c: any) => c.checked)
     .map((l: any) => l.id)
@@ -169,7 +169,7 @@ export function launchSimulation(variable: any, createSimulation: Function, setV
       }
       return true;
     });
-  
+
   const selectedTracks = variable.track
     .filter((c: any) => c.checked)
     .map((l: any) => l.id)
@@ -180,45 +180,61 @@ export function launchSimulation(variable: any, createSimulation: Function, setV
       }
       return true;
     });
-  
-  console.log('Selected scenarios (validated):', selectedScenarios);
-  console.log('Selected tracks (validated):', selectedTracks);
-  
-  // Validate that we have valid data
+
   if (selectedScenarios.length === 0) {
-    console.error('No valid scenarios selected or all scenario IDs are invalid UUIDs');
     setVariable.setScenarioError(true);
-    return;
   }
-  
+
   if (selectedTracks.length === 0) {
-    console.error('No valid tracks selected or all track IDs are invalid UUIDs');
     setVariable.setTrackError(true);
-    return;
   }
-  
-  if (variable.title && variable.scenarioType && selectedScenarios.length != 0 && selectedTracks.length != 0) {
-    createSimulation({
-      variables: {
-        simulationInput: {
-          name: variable.title,
-          environment: variable.environment,
-          description: variable.description,
-          platform: variable.platform,
-          scenarioType: variable.scenarioType,
-          hardware: variable.hardware,
-          tracks: selectedTracks,
-          scenarios: selectedScenarios,
-          createdBy: "abc@t-systems.com"
-        },
+
+  if (!(variable.title && variable.scenarioType && selectedScenarios.length !== 0 && selectedTracks.length !== 0)) {
+    setVariable.setTitleError(!variable.title);
+    setVariable.setSTypeError(!variable.scenarioType);
+    return null;
+  }
+
+  return {
+    name: variable.title,
+    environment: variable.environment,
+    description: variable.description,
+    platform: variable.platform,
+    scenarioType: variable.scenarioType,
+    hardware: variable.hardware,
+    tracks: selectedTracks,
+    scenarios: selectedScenarios,
+    createdBy: localStorage.getItem('user') || 'unknown',
+  };
+}
+
+export function launchSimulation(preparedInput: any, createSimulation: Function) {
+  if (!preparedInput) return;
+
+  createSimulation({
+    variables: {
+      simulationInput: {
+        name: preparedInput.name,
+        environment: preparedInput.environment,
+        description: preparedInput.description,
+        platform: preparedInput.platform,
+        scenarioType: preparedInput.scenarioType,
+        hardware: preparedInput.hardware,
+        tracks: preparedInput.tracks,
+        scenarios: preparedInput.scenarios,
+        createdBy: preparedInput.createdBy || "abc@t-systems.com",
       },
-    })
-  } else {
-    setVariable.setTitleError(true)
-    setVariable.setSTypeError(true)
-    setVariable.setTrackError(true)
-    setVariable.setScenarioError(true)
-  }
+    },
+  })
+}
+
+export function requestSimulationApproval(preparedInput: any) {
+  if (!preparedInput) return;
+  createApprovalRequest({
+    ...preparedInput,
+    requiredCompute: 'NULL',
+    status: 'pending',
+  });
 }
 export function onLaunchedSimulation(setSelectedscenario: Function, setSelectedtrack: Function, setIsToastOpen: Function, setToastMsg: Function, res: any, flag: boolean) {
   if (flag) {

@@ -3,6 +3,7 @@ import { useStoreActions, useStoreState } from 'easy-peasy'
 import { useRouter } from 'next/router'
 import React, { useEffect, useState } from 'react'
 import ActiveLink from './ActiveLink'
+import { logoutUser } from '../../services/credentials.service'
 export function User() {
     return useStoreState((state: any) => state.user)
 }
@@ -24,6 +25,8 @@ export function Layout({ children }: any) {
         }
     })
     const username = localStorage.getItem('user')
+    const role = localStorage.getItem('role') || 'developer'
+    const displayName = username ? `${username}:${role}` : ''
     const user = User();
     return (
         <Box fullHeight>
@@ -43,7 +46,7 @@ export function Layout({ children }: any) {
                                 right data-testid='logout'
                                 onClick={() => { setOpenMenu(true) }}
                             >
-                                {username} <Icon name='user' id='Logout' />
+                                {displayName} <Icon name='user' id='Logout' />
                             </NavigationBarItem> : ''}
 
                         </NavigationBar>
@@ -64,7 +67,7 @@ export function Layout({ children }: any) {
                 target={target}
                 items={[{ text: 'logout' }]}
                 onItemClick={(e: any) => {
-                    localStorage.removeItem('token')
+                    logoutUser()
                     setUser(false)
                     router.replace('/logout')
                 }}

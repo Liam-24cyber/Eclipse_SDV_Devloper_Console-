@@ -1,21 +1,28 @@
-import { store } from "../../services/store.service";
-import { enableFetchMocks } from 'jest-fetch-mock'
-enableFetchMocks()
-jest.mock('next/router', () => require('next-router-mock'));
-import fetch from 'jest-fetch-mock'
-import { onSubmit } from "../../services/credentials.service";
+import { getStoredUsers, loginUser, logoutUser, signupUser } from "../../services/credentials.service";
+
 describe('credentials', () => {
-    it('on submit', async () => {
-        try {
-            return await (onSubmit('dco','dco',jest.fn(),''))
-                .then((result) => result)
-                .then((res:any)=>{})
-        } catch (e) {
-            return e;
-        }
-    })
     beforeEach(() => {
-        fetch.resetMocks();
+        localStorage.clear();
     });
-    store.getActions().setPage(1);
-})
+
+    it('logs in with the default developer account and keeps role', () => {
+        const result = loginUser('developer', 'password');
+        expect(result.success).toBeTruthy();
+        expect(result.username).toBe('developer');
+        expect(result.role).toBe('developer');
+        expect(localStorage.getItem('role')).toBe('developer');
+    });
+
+    it('creates and logs in a new dummy user', () => {
+        const signup = signupUser('new-user', 'secret', 'manager');
+        expect(signup.success).toBeTruthy();
+        expect(signup.role).toBe('manager');
+
+        logoutUser();
+        const login = loginUser('new-user', 'secret');
+        expect(login.success).toBeTruthy();
+        const users = getStoredUsers();
+        expect(users.some((user) => user.username === 'new-user' && user.role === 'manager')).toBeTruthy();
+        expect(localStorage.getItem('role')).toBe('manager');
+    });
+});

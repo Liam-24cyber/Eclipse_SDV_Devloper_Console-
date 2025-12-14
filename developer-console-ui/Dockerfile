@@ -1,11 +1,28 @@
-FROM node:16.14-alpine AS app
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -u 1001 -S nextjs
+FROM node:18-alpine AS builder
 WORKDIR /app
-COPY --chown=nextjs:nodejs developer-console-ui/app/next.config.js ./next.config.js
-COPY --chown=nextjs:nodejs developer-console-ui/app/public ./public
-COPY --chown=nextjs:nodejs developer-console-ui/app/.next ./.next
-COPY --chown=nextjs:nodejs developer-console-ui/app/node_modules ./node_modules
-COPY --chown=nextjs:nodejs developer-console-ui/app/package.json ./package.json
+
+# Install dependencies
+COPY developer-console-ui/app/package.json developer-console-ui/app/yarn.lock ./ 
+COPY developer-console-ui/app/dco-sdv-ui-1.120.0.tgz ./dco-sdv-ui-1.120.0.tgz
+RUN yarn install --frozen-lockfile
+
+# Build the Next.js app
+COPY developer-console-ui/app/ .
+RUN yarn build
+
+FROM node:18-alpine AS runner
+RUN addgroup -g 1001 -S nodejs && adduser -u 1001 -S nextjs
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy the built app and runtime assets
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/next.config.js ./next.config.js
+
 USER nextjs
+EXPOSE 3000
 CMD ["yarn", "start"]

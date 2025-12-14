@@ -1,13 +1,16 @@
-import { enableFetchMocks } from 'jest-fetch-mock'
 import { fireEvent, render, screen } from '@testing-library/react';
-enableFetchMocks()
 jest.mock('next/router', () => require('next-router-mock'));
-import fetch from 'jest-fetch-mock'
+import router from 'next-router-mock';
 import { store } from '../services/store.service';
 import { StoreProvider } from 'easy-peasy';
 import Login from '../pages/login';
 describe('login ', () => {
-  it("should render login page", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    router.push('/login');
+  });
+
+  it("logs in with default credentials", () => {
     render(
       //  @ts-ignore 
       <StoreProvider store={store}>
@@ -16,11 +19,8 @@ describe('login ', () => {
     );
     const submit = screen.getByTestId("submitBtn");
     fireEvent.click(submit);
-    store.getActions().setCount(0);
-  });
-  beforeEach(() => {
-    fetch.resetMocks();
-  });
-  store.getActions().setPage(1);
-})
 
+    expect(router.asPath).toBe('/dco/scenario');
+    expect(localStorage.getItem('role')).toBe('developer');
+  });
+})

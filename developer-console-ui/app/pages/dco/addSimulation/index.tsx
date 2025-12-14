@@ -2,7 +2,7 @@ import { BackButton, Box, Button, Flex, Headline, Input, NavigationBar, Navigati
 import Layout from "../../../components/layout/layout"
 import router from "next/router";
 import { useState } from "react";
-import { clearAll, launchSimulation, onLaunchedSimulation } from "../../../services/functionSimulation.service";
+import { clearAll, launchSimulation, onLaunchedSimulation, prepareSimulationInput, requestSimulationApproval } from "../../../services/functionSimulation.service";
 import { useStoreActions, useStoreState } from "easy-peasy";
 import { useMutation, useQuery } from "@apollo/client";
 import { HARDWARE_MODULE, LAUNCH_SIMULATION } from "../../../services/queries";
@@ -46,6 +46,8 @@ const AddSimulation = ({ children }: any) => {
     const track = Selectedtrack();
     const [trackError, setTrackError] = useState(false);
     const [scenarioError, setScenarioError] = useState(false);
+    const role = (localStorage.getItem('role') || 'developer').toLowerCase();
+    const isDeveloper = role === 'developer';
     const [createSimulation] = useMutation(LAUNCH_SIMULATION, {
         onCompleted(value) {
             onLaunchedSimulation(setSelectedscenario, setSelectedtrack, setIsToastOpen, setToastMsg, value, true)
@@ -186,8 +188,26 @@ const AddSimulation = ({ children }: any) => {
                         <Spacer space={8}></Spacer>
                         <Flex>
                             <Flex.Item textAlign="right" colSpan={2}>
-                                <Button onClick={() => { launchSimulation({ title, description, environment, platform, scenario, track, scenarioType, hardware } as const, createSimulation, { setIsToastOpen, setToastMsg, setTitleError, setSTypeError, setTrackError, setScenarioError } as const); setSearchval('') }}>
-                                    Launch Simulation
+                                <Button onClick={() => {
+                                    const prepared = prepareSimulationInput({ title, description, environment, platform, scenario, track, scenarioType, hardware } as const, { setTitleError, setSTypeError, setTrackError, setScenarioError } as const);
+                                    if (!prepared) return;
+
+                                    if (isDeveloper) {
+                                        requestSimulationApproval(prepared);
+                                        setIsToastOpen(true);
+                                        setToastMsg('Approval request sent to Team Leads. Required compute: NULL');
+                                        setSelectedscenario([{ id: '93b866de-a642-4543-886c-a3597dbe9d8f', checked: false }]);
+                                        setSelectedtrack([{ id: 'a633a44b-0df6-43c5-9250-aaca94191054', checked: false }]);
+                                        setTimeout(() => {
+                                            router.push('/dco/approvals');
+                                        }, 1500);
+                                        return;
+                                    }
+
+                                    launchSimulation(prepared, createSimulation);
+                                    setSearchval('');
+                                }}>
+                                    {isDeveloper ? 'Request Approval' : 'Launch Simulation'}
                                 </Button>
                             </Flex.Item>
                             <Flex.Item textAlign="center" colSpan={1}>

@@ -20,9 +20,12 @@ const Dco = ({ children }: any) => {
   const trackTabClicked = router.pathname === '/dco/tracksMain'
   const libTabClicked = router.pathname.includes('/dco/scenario')
   const simulationTabClicked = router.pathname === '/dco/simulation'
+  const approvalsTabClicked = router.pathname === '/dco/approvals'
   const resultsTabClicked = router.pathname === '/dco/results'
   const token = localStorage.getItem('token')
-  return (<>{
+  const role = (localStorage.getItem('role') || 'developer').toLowerCase()
+  const isDeveloper = role === 'developer'
+  return (<>{ 
     <Layout>
       <Box padding='none' invert={invert()} variant='body' fullHeight>
         <Flex column fullHeight>
@@ -37,6 +40,7 @@ const Dco = ({ children }: any) => {
                       {libTabClicked && <Headline level={1}> {Count() || 0} scenarios</Headline>}
                       {trackTabClicked && <Headline level={1}>{Count() || 0} tracks</Headline>}
                       {simulationTabClicked && <Headline level={1}> {Count() || 0} simulations</Headline>}
+                      {(!isDeveloper && approvalsTabClicked) && <Headline level={1}> {Count() || 0} approvals</Headline>}
                       {resultsTabClicked && <Headline level={1}> {Count() || 0} results</Headline>}
                     </Flex.Item>
                     <Flex.Item textAlign='left' valign='bottom'>
@@ -74,6 +78,11 @@ const Dco = ({ children }: any) => {
                   <ActiveLink href={checkRoute('/dco/simulation', router, pathname)}>
                     <NavigationBarItem>simulations</NavigationBarItem>
                   </ActiveLink>
+                  {!isDeveloper && (
+                    <ActiveLink href={checkRoute('/dco/approvals', router, pathname)}>
+                      <NavigationBarItem>approvals</NavigationBarItem>
+                    </ActiveLink>
+                  )}
                   <ActiveLink href={checkRoute('/dco/results', router, pathname)}>
                     <NavigationBarItem>results</NavigationBarItem>
                   </ActiveLink>
