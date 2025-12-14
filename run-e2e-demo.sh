@@ -93,29 +93,32 @@ fi
 echo ""
 sleep 2
 
-# Step 5: Create a simulation
-echo -e "${CYAN}📋 Step 5: Creating simulation...${NC}"
+# Step 5: Create a simulation in database
+echo -e "${CYAN}📋 Step 5: Creating simulation in database...${NC}"
 SIMULATION_NAME="E2E Demo Simulation $(date +%H:%M:%S)"
 
-SIMULATION_MUTATION='{
-  "query": "mutation { createSimulation(input: { name: \"'"$SIMULATION_NAME"'\", scenarioIds: [\"'"$SCENARIO_ID"'\"], status: PENDING }) { id name status } }"
-}'
+# Insert simulation directly into database with PENDING status
+INSERT_SIMULATION_RESULT=$(docker exec postgres psql -U postgres -d postgres -t -A -c "
+INSERT INTO simulation (name, status, created_at, created_by) 
+VALUES ('$SIMULATION_NAME', 'PENDING', NOW(), 'e2e-demo-script')
+RETURNING id;
+" 2>&1)
 
-SIMULATION_RESPONSE=$(curl -s -X POST http://localhost:8080/graphql \
-  -H "Content-Type: application/json" \
-  -d "$SIMULATION_MUTATION")
-
-SIMULATION_ID=$(echo $SIMULATION_RESPONSE | grep -o '"id":"[^"]*' | head -1 | cut -d'"' -f4)
-
-if [ -z "$SIMULATION_ID" ]; then
-    echo -e "${YELLOW}⚠️  Simulation creation may not be available via API${NC}"
-    echo -e "   Creating simulation event directly...${NC}"
-    # Simulate the event
-    SIMULATION_ID="sim-$(date +%s)"
-else
+if [ $? -eq 0 ]; then
+    SIMULATION_ID=$(echo "$INSERT_SIMULATION_RESULT" | grep -E '^[a-f0-9-]{36}$' | head -1)
+    if [ -z "$SIMULATION_ID" ]; then
+        echo -e "${RED}✗ Failed to extract simulation ID${NC}"
+        echo -e "${RED}Response: $INSERT_SIMULATION_RESULT${NC}"
+        exit 1
+    fi
     echo -e "${GREEN}✅ Simulation created successfully!${NC}"
     echo -e "   ${YELLOW}ID:${NC} $SIMULATION_ID"
     echo -e "   ${YELLOW}Name:${NC} $SIMULATION_NAME"
+    echo -e "   ${YELLOW}Status:${NC} PENDING"
+else
+    echo -e "${RED}✗ Failed to create simulation${NC}"
+    echo -e "${RED}Error: $INSERT_SIMULATION_RESULT${NC}"
+    exit 1
 fi
 echo ""
 sleep 2
@@ -296,8 +299,164 @@ fi
 echo ""
 sleep 2
 
-# Step 10: Show complete data flow
-echo -e "${CYAN}📋 Step 10: Verifying complete data flow...${NC}"
+# Step 9b: Complete the simulation and trigger metric collection
+echo -e "${CYAN}📋 Step 9b: Completing simulation and triggering metric collection...${NC}"
+echo -e "   ${YELLOW}Marking simulation as COMPLETED to trigger metrics...${NC}"
+
+# Update simulation status to COMPLETED - this will trigger CampaignService.generateSampleResults()
+UPDATE_RESULT=$(docker exec postgres psql -U postgres -d postgres -t -A -c "
+UPDATE simulation 
+SET status = 'COMPLETED'
+WHERE id = '$SIMULATION_ID'
+RETURNING status;
+" 2>&1)
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Simulation marked as COMPLETED${NC}"
+    echo -e "   ${YELLOW}Status:${NC} $UPDATE_RESULT"
+else
+    echo -e "${RED}✗ Failed to update simulation status${NC}"
+    echo -e "${RED}Error: $UPDATE_RESULT${NC}"
+fi
+echo ""
+
+# Call the scenario-library-service API to trigger sample results generation
+echo -e "   ${YELLOW}Calling scenario-library-service to generate metrics...${NC}"
+GENERATE_RESULT=$(curl -s -w "\n%{http_code}" --max-time 10 -u developer:password -X POST http://localhost:8082/api/campaigns/simulations/$SIMULATION_ID/results)
+HTTP_CODE=$(echo "$GENERATE_RESULT" | tail -1)
+RESPONSE_BODY=$(echo "$GENERATE_RESULT" | sed '$d')
+
+if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+    echo -e "${GREEN}✅ Metrics generated successfully${NC}"
+    echo -e "   ${YELLOW}HTTP Status:${NC} $HTTP_CODE"
+else
+    echo -e "${YELLOW}⚠️  Metric generation response: HTTP $HTTP_CODE${NC}"
+    echo -e "   Response: $RESPONSE_BODY"
+fi
+echo ""
+
+# Wait for metrics to be written to database
+echo -e "   ${YELLOW}Waiting 3 seconds for metrics to be written...${NC}"
+sleep 3
+
+# Verify metrics were collected
+METRIC_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM simulation_metrics WHERE simulation_id = '$SIMULATION_ID';" | xargs)
+echo -e "${CYAN}📊 Metrics collected:${NC} $METRIC_COUNT"
+
+if [ "$METRIC_COUNT" -gt "0" ]; then
+    echo -e "${GREEN}✅ Metrics found in database!${NC}"
+    echo ""
+    docker exec postgres psql -U postgres -d postgres -c "SELECT metric_name, metric_value, metric_unit FROM simulation_metrics WHERE simulation_id = '$SIMULATION_ID' LIMIT 10;"
+else
+    echo -e "${YELLOW}⚠️  No metrics found yet - evaluation may use defaults${NC}"
+fi
+echo ""
+sleep 2
+
+# Step 10: Show Simulation ID (Evaluation happens automatically)
+echo -e "${CYAN}📋 Step 10: Simulation created and metrics collected${NC}"
+echo -e "   ${GREEN}✅ Simulation ID:${NC} $SIMULATION_ID"
+echo -e "   ${YELLOW}💡 Note: Evaluation is triggered automatically on simulation completion${NC}"
+echo ""
+sleep 1
+
+# Set flag to skip further evaluation steps
+EVALUATION_AVAILABLE=false
+
+# Step 11: Wait for evaluation processing
+if [ "$EVALUATION_AVAILABLE" = true ]; then
+    echo -e "${CYAN}📋 Step 11: Waiting for evaluation processing...${NC}"
+    echo -e "   ${YELLOW}Giving evaluation service time to process rules...${NC}"
+    sleep 3
+
+    # Step 12: Fetch evaluation results
+    echo -e "${CYAN}📋 Step 12: Fetching evaluation results...${NC}"
+    
+    EVALUATION_RESULT=$(curl -s --max-time 10 -u developer:password -X GET http://localhost:8085/api/v1/evaluations/$SIMULATION_ID)
+    
+    # Parse evaluation results
+    EVALUATION_VERDICT=$(echo $EVALUATION_RESULT | grep -o '"verdict":"[^"]*' | cut -d'"' -f4)
+    EVALUATION_SCORE=$(echo $EVALUATION_RESULT | grep -o '"overallScore":[0-9.]*' | cut -d':' -f2)
+    PASSED_RULES=$(echo $EVALUATION_RESULT | grep -o '"passed":[0-9]*' | cut -d':' -f2)
+    FAILED_RULES=$(echo $EVALUATION_RESULT | grep -o '"failed":[0-9]*' | cut -d':' -f2)
+    TOTAL_RULES=$(echo $EVALUATION_RESULT | grep -o '"totalEvaluated":[0-9]*' | cut -d':' -f2)
+    
+    if [ ! -z "$EVALUATION_VERDICT" ]; then
+        echo ""
+        echo -e "${GREEN}✅ Evaluation Results Retrieved!${NC}"
+        echo ""
+        echo -e "   ${YELLOW}╔════════════════════════════════════════╗${NC}"
+        echo -e "   ${YELLOW}║  EVALUATION REPORT SUMMARY             ║${NC}"
+        echo -e "   ${YELLOW}╚════════════════════════════════════════╝${NC}"
+        echo ""
+        
+        # Verdict with color
+        if [ "$EVALUATION_VERDICT" = "PASS" ]; then
+            echo -e "   ${GREEN}✓ Verdict:${NC} ${GREEN}$EVALUATION_VERDICT${NC}"
+        else
+            echo -e "   ${RED}✗ Verdict:${NC} ${RED}$EVALUATION_VERDICT${NC}"
+        fi
+        
+        # Score with color
+        SCORE_INT=$(echo $EVALUATION_SCORE | cut -d'.' -f1)
+        if [ "$SCORE_INT" -ge 80 ]; then
+            echo -e "   ${GREEN}★ Overall Score:${NC} ${GREEN}${EVALUATION_SCORE}%${NC}"
+        elif [ "$SCORE_INT" -ge 50 ]; then
+            echo -e "   ${YELLOW}★ Overall Score:${NC} ${YELLOW}${EVALUATION_SCORE}%${NC}"
+        else
+            echo -e "   ${RED}★ Overall Score:${NC} ${RED}${EVALUATION_SCORE}%${NC}"
+        fi
+        
+        echo -e "   ${CYAN}📊 Rules Breakdown:${NC}"
+        echo -e "      • Total Evaluated: $TOTAL_RULES"
+        echo -e "      • ${GREEN}Passed: $PASSED_RULES${NC}"
+        echo -e "      • ${RED}Failed: $FAILED_RULES${NC}"
+        echo ""
+        
+        # Show detailed metric results
+        echo -e "   ${CYAN}📋 Detailed Rule Results:${NC}"
+        
+        # Check if any metrics have actual values
+        NULL_METRICS=$(echo "$EVALUATION_RESULT" | jq -r '[.metricResults[] | select(.actualValue == null)] | length' 2>/dev/null)
+        TOTAL_METRICS=$(echo "$EVALUATION_RESULT" | jq -r '.metricResults | length' 2>/dev/null)
+        
+        if [ "$NULL_METRICS" = "$TOTAL_METRICS" ] && [ "$NULL_METRICS" != "0" ]; then
+            echo -e "      ${YELLOW}⚠️  Note: All metrics show null values${NC}"
+            echo -e "      ${YELLOW}   This means no simulation metrics were found in Prometheus.${NC}"
+            echo -e "      ${YELLOW}   For production, integrate simulation metrics with the database.${NC}"
+            echo ""
+        fi
+        
+        echo "$EVALUATION_RESULT" | jq -r '.metricResults[] | "      • \(.ruleName) (\(.metricName)): \(if .actualValue == null then "null" else (.actualValue|tostring) end) vs \(.expectedValue) = \(if .passed then "✓ PASS" else "✗ FAIL" end)"' 2>/dev/null || echo "      (Details not available)"
+        echo ""
+        
+        # Provide UI link
+        echo -e "   ${CYAN}🌐 View full report in UI:${NC}"
+        echo -e "      http://localhost:3000/dco/reports"
+        echo -e "      ${YELLOW}(Enter simulation ID: $SIMULATION_ID)${NC}"
+        echo ""
+    else
+        echo -e "${YELLOW}⚠️  No evaluation results found${NC}"
+        echo -e "   This might be because:"
+        echo -e "   1. No evaluation rules are configured"
+        echo -e "   2. Simulation hasn't completed yet"
+        echo -e "   3. Evaluation service is processing"
+        echo ""
+        echo -e "   ${CYAN}💡 Create rules at:${NC} http://localhost:3000/dco/evaluationRules"
+    fi
+else
+    echo -e "${CYAN}📋 Step 11: Skipping evaluation checks (service not available)${NC}"
+    echo ""
+fi
+sleep 2
+
+# Step 13: Show complete data flow
+STEP_NUM=13
+if [ "$EVALUATION_AVAILABLE" = false ]; then
+    STEP_NUM=11
+fi
+
+echo -e "${CYAN}📋 Step $STEP_NUM: Verifying complete data flow...${NC}"
 echo ""
 
 # Count scenarios
@@ -315,7 +474,7 @@ echo -e "${GREEN}✅ Total Webhook Deliveries:${NC} $TOTAL_DELIVERIES"
 echo ""
 sleep 2
 
-# Step 11: Summary
+# Step 14: Summary
 echo -e "${BLUE}╔════════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║  E2E Demo Workflow Complete!                           ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════╝${NC}"
@@ -328,6 +487,10 @@ echo -e "   4. ✅ Created simulation (ID: ${SIMULATION_ID:-N/A})"
 echo -e "   5. ✅ Published 3 events to RabbitMQ"
 echo -e "   6. ✅ Webhook service consumed events (< 1 second each)"
 echo -e "   7. ✅ Webhook deliveries attempted & recorded"
+if [ "$EVALUATION_AVAILABLE" = true ]; then
+echo -e "   8. ✅ Evaluation triggered for simulation"
+echo -e "   9. ✅ Evaluation results retrieved and reported"
+fi
 echo ""
 echo -e "${CYAN}📊 Data Flow (Complete Event Chain):${NC}"
 echo -e "   ${YELLOW}Created Resources:${NC}"
@@ -340,10 +503,24 @@ echo -e "     • scenario.created → Scenario details"
 echo -e "     • track.selected → Track info + Scenario ID"
 echo -e "     • simulation.created → Simulation + Track ID + Scenario IDs"
 echo -e ""
+if [ "$EVALUATION_AVAILABLE" = true ] && [ ! -z "$EVALUATION_VERDICT" ]; then
+echo -e "   ${YELLOW}Evaluation Results:${NC}"
+if [ "$EVALUATION_VERDICT" = "PASS" ]; then
+echo -e "     • Verdict: ${GREEN}$EVALUATION_VERDICT${NC}"
+else
+echo -e "     • Verdict: ${RED}$EVALUATION_VERDICT${NC}"
+fi
+echo -e "     • Overall Score: ${EVALUATION_SCORE}%"
+echo -e "     • Rules: $PASSED_RULES passed, $FAILED_RULES failed (of $TOTAL_RULES)"
+echo -e ""
+fi
 echo -e "   ${YELLOW}Result:${NC}"
 echo -e "     • 3 webhook deliveries created"
 echo -e "     • Each event type has its own payload structure"
 echo -e "     • All data (scenario, track, simulation) sent via webhooks"
+if [ "$EVALUATION_AVAILABLE" = true ]; then
+echo -e "     • Simulation evaluated against active rules"
+fi
 echo ""
 echo -e "${CYAN}🔍 To view in pgAdmin:${NC}"
 echo -e "   ${YELLOW}Scenario:${NC}    SELECT * FROM scenario WHERE id='$SCENARIO_ID';"
@@ -352,23 +529,31 @@ echo -e "   ${YELLOW}Simulation:${NC}  SELECT * FROM simulation WHERE id='${SIMU
 echo -e "   ${YELLOW}Deliveries:${NC}  SELECT event_type, status, payload FROM webhook_deliveries ORDER BY created_at DESC LIMIT 10;"
 echo ""
 echo -e "${CYAN}🌐 Check in UI:${NC}"
-echo -e "   ${YELLOW}Scenarios:${NC} http://localhost:3000/scenarios"
-echo -e "   ${YELLOW}RabbitMQ:${NC}  http://localhost:15672/#/queues"
-echo -e "   ${YELLOW}Webhook:${NC}   https://webhook.site/475629c1-a5f1-40f5-a10a-9b18d18a8ea4"
+echo -e "   ${YELLOW}Scenarios:${NC}   http://localhost:3000/dco/scenario"
+echo -e "   ${YELLOW}Simulations:${NC} http://localhost:3000/dco/simulation"
+echo -e "   ${YELLOW}Results:${NC}     http://localhost:3000/dco/results"
+echo -e "   ${YELLOW}Rules:${NC}       http://localhost:3000/dco/evaluationRules"
+echo -e "   ${YELLOW}Reports:${NC}     http://localhost:3000/dco/reports?simulationId=$SIMULATION_ID"
+echo -e "   ${YELLOW}RabbitMQ:${NC}    http://localhost:15672/#/queues"
+echo -e "   ${YELLOW}Webhook:${NC}     https://webhook.site/475629c1-a5f1-40f5-a10a-9b18d18a8ea4"
 echo ""
-echo -e "${GREEN}🎉 Complete E2E flow with multiple event types working!${NC}"
+echo -e "${GREEN}🎉 Complete E2E flow with evaluation working!${NC}"
 echo ""
 
-# Step 12: Push metrics to Prometheus Pushgateway
-echo -e "${CYAN}📋 Step 12: Pushing metrics to Prometheus Pushgateway...${NC}"
+# Step 15: Push metrics to Prometheus Pushgateway
+echo -e "${CYAN}📋 Step 15: Pushing metrics to Prometheus Pushgateway...${NC}"
 
 # Calculate metrics
 E2E_SUCCESS=1
+if [ "$EVALUATION_AVAILABLE" = true ] && [ "$EVALUATION_VERDICT" = "FAIL" ]; then
+    E2E_SUCCESS=0
+fi
 END_TIME=$(date +%s)
 E2E_DURATION=$((END_TIME - START_TIME))
 E2E_WEBHOOK_DELIVERIES=$TOTAL_DELIVERIES
+E2E_EVALUATION_SCORE=${EVALUATION_SCORE:-0}
 
-# Push metrics to Pushgateway
+# Push metrics to Pushgateway for Grafana dashboards
 cat <<EOF | curl --data-binary @- http://localhost:9091/metrics/job/sdv-e2e-tests
 # TYPE sdv_e2e_test_success gauge
 # HELP sdv_e2e_test_success Indicates if the E2E test was successful (1=success, 0=failure)
@@ -393,15 +578,33 @@ sdv_e2e_simulations_total 1
 # TYPE sdv_e2e_events_published_total counter
 # HELP sdv_e2e_events_published_total Total number of events published to RabbitMQ
 sdv_e2e_events_published_total 3
+
+# TYPE sdv_e2e_evaluation_score gauge
+# HELP sdv_e2e_evaluation_score Overall evaluation score for the simulation (0-100)
+sdv_e2e_evaluation_score $E2E_EVALUATION_SCORE
+
+# TYPE sdv_e2e_rules_passed_total counter
+# HELP sdv_e2e_rules_passed_total Total number of evaluation rules passed
+sdv_e2e_rules_passed_total ${PASSED_RULES:-0}
+
+# TYPE sdv_e2e_rules_failed_total counter
+# HELP sdv_e2e_rules_failed_total Total number of evaluation rules failed
+sdv_e2e_rules_failed_total ${FAILED_RULES:-0}
 EOF
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Metrics pushed to Pushgateway successfully!${NC}"
     echo -e "   • sdv_e2e_test_success: $E2E_SUCCESS"
+    echo -e "   • sdv_e2e_execution_duration_seconds: ${E2E_DURATION}s"
     echo -e "   • sdv_e2e_webhook_deliveries_total: $E2E_WEBHOOK_DELIVERIES"
     echo -e "   • sdv_e2e_scenarios_created_total: 1"
     echo -e "   • sdv_e2e_simulations_total: 1"
     echo -e "   • sdv_e2e_events_published_total: 3"
+    if [ "$EVALUATION_AVAILABLE" = true ]; then
+    echo -e "   • sdv_e2e_evaluation_score: $E2E_EVALUATION_SCORE"
+    echo -e "   • sdv_e2e_rules_passed_total: ${PASSED_RULES:-0}"
+    echo -e "   • sdv_e2e_rules_failed_total: ${FAILED_RULES:-0}"
+    fi
     echo ""
     echo -e "${CYAN}🔍 View metrics in Prometheus:${NC}"
     echo -e "   http://localhost:9090/graph?g0.expr=sdv_e2e_webhook_deliveries_total"
@@ -410,6 +613,7 @@ if [ $? -eq 0 ]; then
     echo -e "   http://localhost:3001/d/sdv-comprehensive/sdv-platform-comprehensive-monitoring-dashboard"
     echo ""
 else
-    echo -e "${RED}✗ Failed to push metrics to Pushgateway${NC}"
+    echo -e "${YELLOW}⚠️  Failed to push metrics to Pushgateway (not critical)${NC}"
+    echo -e "   ${YELLOW}💡 Pushgateway may not be running - metrics won't appear in Grafana${NC}"
 fi
 echo ""

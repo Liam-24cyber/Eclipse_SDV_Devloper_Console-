@@ -46,9 +46,18 @@ public class WebConfig {
   public CorsWebFilter corsWebFilter() {
     CorsConfiguration corsConfiguration = new CorsConfiguration();
     corsConfiguration.setAllowedMethods(Arrays.asList("HEAD", "GET", "PUT", "POST", "DELETE", "PATCH", "OPTIONS"));
-    corsConfiguration.setAllowedOriginPatterns(Arrays.asList(properties.getCors().getOrigins()));
-    corsConfiguration.setAllowedHeaders(Arrays.asList(properties.getCors().getHeaders()));
+    // Split the origins string by comma in case there are multiple origins
+    String originsStr = properties.getCors().getOrigins();
+    if (originsStr != null && !originsStr.isEmpty()) {
+      corsConfiguration.setAllowedOriginPatterns(Arrays.asList(originsStr.split(",")));
+    }
+    // Split the headers string by comma
+    String headersStr = properties.getCors().getHeaders();
+    if (headersStr != null && !headersStr.isEmpty()) {
+      corsConfiguration.setAllowedHeaders(Arrays.asList(headersStr.split(",")));
+    }
     corsConfiguration.setAllowCredentials(true);
+    corsConfiguration.setMaxAge(3600L); // Cache preflight for 1 hour
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/**", corsConfiguration);

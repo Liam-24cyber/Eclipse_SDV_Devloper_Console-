@@ -125,6 +125,12 @@ docker-compose up -d webhook-management-service
 sleep 8
 print_status "Webhook Management Service started (with latest fixes)"
 
+echo ""
+echo "   Starting Evaluation Service..."
+docker-compose up -d evaluation-service
+sleep 5
+print_status "Evaluation Service started"
+
 # Step 7: Start gateway and UI
 echo ""
 echo "📋 Step 6: Starting gateway and UI..."
@@ -142,9 +148,9 @@ print_status "Developer Console UI started"
 # Step 8: Start monitoring services
 echo ""
 echo "📋 Step 7: Starting monitoring services..."
-docker-compose up -d pgadmin prometheus grafana
+docker-compose up -d pgadmin prometheus pushgateway grafana
 sleep 3
-print_status "Monitoring services started"
+print_status "Monitoring services started (pgAdmin, Prometheus, Pushgateway, Grafana)"
 
 # Step 9: Verify all services are running
 echo ""
@@ -160,8 +166,13 @@ SERVICES=(
     "scenario-library-service:8082:Scenario Library Service"
     "tracks-management-service:8081:Tracks Management Service"
     "webhook-management-service:8084:Webhook Management Service"
+    "evaluation-service:8085:Evaluation Service"
     "dco-gateway:8080:API Gateway"
     "developer-console-ui:3000:Developer Console UI"
+    "prometheus:9090:Prometheus"
+    "pushgateway:9091:Prometheus Pushgateway"
+    "grafana:3001:Grafana"
+    "pgadmin:5050:pgAdmin"
 )
 
 ALL_RUNNING=true
@@ -194,9 +205,11 @@ echo "📚 Scenario Library Service: http://localhost:8082"
 echo "🛤️  Tracks Management:       http://localhost:8081"
 echo "📬 Message Queue Service:    http://localhost:8083"
 echo "🪝 Webhook Management:       http://localhost:8084"
+echo "⚙️  Evaluation Service:      http://localhost:8085"
 echo "🐰 RabbitMQ Management UI:   http://localhost:15672 (admin/admin123)"
 echo "💾 pgAdmin:                  http://localhost:5050 (admin@default.com/admin)"
 echo "📊 Prometheus:               http://localhost:9090"
+echo "📤 Prometheus Pushgateway:   http://localhost:9091"
 echo "📈 Grafana:                  http://localhost:3001 (admin/admin)"
 echo "🗄️  MinIO Console:            http://localhost:9001 (minioadmin/minioadmin)"
 echo ""

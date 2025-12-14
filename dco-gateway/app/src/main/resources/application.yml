@@ -32,8 +32,14 @@ spring:
       printer:
         enabled: true
     cors:
-      allowed-origins: ${app.cors.origins}
-      allowed-headers: ${app.cors.headers}
+      allowed-origin-patterns: "*"
+      allowed-headers: "*"
+      allowed-methods:
+        - GET
+        - POST
+        - OPTIONS
+      allow-credentials: true
+      max-age: 3600
   
   # Enhanced API Gateway Configuration
   cloud:
@@ -43,15 +49,18 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: ${app.cors.origins}
-            allowedHeaders: ${app.cors.headers}
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
             allowedMethods:
               - GET
               - POST
               - PUT
               - DELETE
+              - PATCH
               - OPTIONS
+              - HEAD
             allowCredentials: true
+            maxAge: 3600
       routes:
         # Route for Scenario Library Service
         - id: scenario-service-route

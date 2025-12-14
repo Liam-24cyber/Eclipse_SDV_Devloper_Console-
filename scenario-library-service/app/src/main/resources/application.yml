@@ -21,6 +21,9 @@ app:
   password: password
 track-service:
   url: http://localhost:8081
+evaluation:
+  service:
+    url: ${EVALUATION_SERVICE_URL:http://localhost:8085}
 server:
   port: ${app.rest.port}
   forward-headers-strategy: FRAMEWORK

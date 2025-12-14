@@ -89,6 +89,7 @@ services:
       APP_POSTGRES_PASSWORD: postgres
       TRACK-SERVICE_URL: tracks-management-service:8081
       MESSAGE_QUEUE_SERVICE_URL: http://message-queue-service:8083
+      EVALUATION_SERVICE_URL: http://evaluation-service:8085
     networks:
       - services
     restart: unless-stopped
@@ -254,6 +255,45 @@ services:
         condition: service_healthy
       message-queue-service:
         condition: service_healthy
+
+  # Evaluation Service for automated simulation evaluation
+  evaluation-service:
+    image: evaluation-service:1.0
+    container_name: evaluation-service
+    build:
+      context: ./evaluation-service
+      dockerfile: Dockerfile.app
+    ports:
+      - "8085:8085"
+    environment:
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: postgres
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      PROMETHEUS_URL: http://prometheus:9090
+      SERVER_PORT: 8085
+      AUTO_EVALUATE: true
+    networks:
+      - services
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      prometheus:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   # Prometheus server for metrics collection
   prometheus:
