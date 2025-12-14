@@ -37,6 +37,10 @@ services:
       SCENARIO_LIBRARY_URL: scenario-library-service:8082
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
     networks:
       - services
     depends_on:
