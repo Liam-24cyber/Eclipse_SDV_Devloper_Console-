@@ -6,6 +6,44 @@
 
 set -e
 
+# Prefer bundled jq if PATH resolution is flaky on Windows/git-bash
+JQ_CMD="./jq"
+if [ ! -x "$JQ_CMD" ] && [ -x "./jq.exe" ]; then
+  JQ_CMD="./jq.exe"
+fi
+
+# Quick compute estimator (matches UI demo heuristic)
+compute_estimate() {
+    local environment="${1,,}"
+    local platform="${2,,}"
+    local scenario="${3,,}"
+    local hardware="${4,,}"
+
+    local base=10
+    local envScore=0
+    if [[ "$environment" == *"prod"* ]]; then envScore=10
+    elif [[ "$environment" == *"qa"* ]]; then envScore=5; fi
+
+    local platformScore=0
+    if [[ "$platform" == *"hil"* ]]; then platformScore=15
+    elif [[ "$platform" == *"sil"* || "$platform" == *"sim"* ]]; then platformScore=5; fi
+
+    local scenarioScore=5
+    if [[ "$scenario" == *"fleet"* ]]; then scenarioScore=15
+    elif [[ "$scenario" == *"sensor"* ]]; then scenarioScore=10; fi
+
+    local hardwareScore=5
+    if [[ "$hardware" == *"gpu"* ]]; then hardwareScore=15
+    elif [[ "$hardware" == *"high"* || "$hardware" == *"xlarge"* ]]; then hardwareScore=10; fi
+
+    local est=$((base + envScore + platformScore + scenarioScore + hardwareScore))
+    local runtime=$((5 + (est / 10) * 5))
+    if [ $runtime -lt 5 ]; then runtime=5; fi
+    if [ $runtime -gt 60 ]; then runtime=60; fi
+
+    echo "Estimated compute: ${est} units | Est. runtime: ${runtime} min"
+}
+
 # Start timing for metrics
 START_TIME=$(date +%s)
 
@@ -142,7 +180,7 @@ EOF
 )
 
 # Publish SCENARIO_CREATED event (to scenario queue for webhook processing)
-SCENARIO_PAYLOAD=$(echo "$SCENARIO_EVENT" | jq -c .)
+SCENARIO_PAYLOAD=$(echo "$SCENARIO_EVENT" | $JQ_CMD -c .)
 curl -s -u admin:admin123 -X POST http://localhost:15672/api/exchanges/%2F/sdv.events/publish \
   -H "Content-Type: application/json" \
   -d "{
@@ -172,7 +210,7 @@ SIMULATION_START_EVENT=$(cat <<EOF
 EOF
 )
 
-SIMULATION_START_PAYLOAD=$(echo "$SIMULATION_START_EVENT" | jq -c .)
+SIMULATION_START_PAYLOAD=$(echo "$SIMULATION_START_EVENT" | $JQ_CMD -c .)
 curl -s -u admin:admin123 -X POST http://localhost:15672/api/exchanges/%2F/sdv.events/publish \
   -H "Content-Type: application/json" \
   -d "{
@@ -211,7 +249,7 @@ SIMULATION_COMPLETE_EVENT=$(cat <<EOF
 EOF
 )
 
-SIMULATION_COMPLETE_PAYLOAD=$(echo "$SIMULATION_COMPLETE_EVENT" | jq -c .)
+SIMULATION_COMPLETE_PAYLOAD=$(echo "$SIMULATION_COMPLETE_EVENT" | $JQ_CMD -c .)
 curl -s -u admin:admin123 -X POST http://localhost:15672/api/exchanges/%2F/sdv.events/publish \
   -H "Content-Type: application/json" \
   -d "{
@@ -292,7 +330,7 @@ echo ""
 # Show recent message rates
 echo -e "${YELLOW}📈 Recent Message Activity (last 5 seconds):${NC}"
 QUEUE_DETAILS=$(curl -s -u admin:admin123 "http://localhost:15672/api/queues/%2F")
-echo "$QUEUE_DETAILS" | jq -r '.[] | select(.name | contains("events")) | 
+echo "$QUEUE_DETAILS" | $JQ_CMD -r '.[] | select(.name | contains("events")) | 
     "  \(.name): \(.message_stats.publish_details.rate // 0) msg/s published, \(.message_stats.deliver_get_details.rate // 0) msg/s delivered"' 2>/dev/null || echo "  (jq not available for detailed rates)"
 
 echo ""
@@ -443,6 +481,11 @@ echo -e "   ${YELLOW}Scenarios:${NC} http://localhost:3000/scenarios"
 echo -e "   ${YELLOW}RabbitMQ:${NC}  http://localhost:15672/#/queues"
 echo -e "   ${YELLOW}Prometheus:${NC} http://localhost:9090/targets"
 echo -e "   ${YELLOW}Grafana:${NC} http://localhost:3001/dashboards"
+echo ""
+echo -e "${CYAN}UI Handoff (Roles & Approvals Demo):${NC}"
+echo -e "   - Login as developer/password, request approval (role selector enabled)."
+echo -e "   - Team Lead/Manager: Approvals tab shows estimated compute/runtime; approve & launch."
+echo -e "   - Sample estimator (QA/SIM/sensor/GPU): $(compute_estimate \"QA\" \"SIM\" \"sensor\" \"GPU\")"
 echo ""
 # Step 12: Push metrics to Prometheus
 echo -e "${CYAN}📋 Step 12: Pushing metrics to Prometheus...${NC}"

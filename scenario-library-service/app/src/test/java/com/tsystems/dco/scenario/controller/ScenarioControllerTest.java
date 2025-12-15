@@ -25,8 +25,10 @@ package com.tsystems.dco.scenario.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tsystems.dco.App;
+import com.tsystems.dco.model.Scenario;
 import com.tsystems.dco.model.ScenarioInput;
 import com.tsystems.dco.scenario.service.ScenarioService;
+import com.tsystems.dco.scenario.service.EventPublishingService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -36,6 +38,7 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -48,6 +51,7 @@ import java.util.UUID;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.any;
+import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
@@ -55,7 +59,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @ContextConfiguration(classes = App.class)
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class ScenarioControllerTest {
 
   @Autowired
@@ -64,10 +69,14 @@ class ScenarioControllerTest {
   private ObjectMapper objectMapper;
   @MockBean
   private ScenarioService scenarioService;
+  @MockBean
+  private EventPublishingService eventPublishingService;
   private static final String TEST = "TEST";
 
   @Test
   void createScenario() throws Exception {
+    Scenario scenario = Scenario.builder().id(UUID.randomUUID()).name(TEST).build();
+    when(scenarioService.createScenario(any(), any())).thenReturn(scenario);
     ScenarioInput scenarioInput = ScenarioInput.builder().name(TEST).build();
     MockMultipartFile file = new MockMultipartFile(TEST, TEST, MediaType.APPLICATION_PDF_VALUE, TEST.getBytes(StandardCharsets.UTF_8));
     MockMultipartFile metadata = new MockMultipartFile(TEST, TEST, MediaType.APPLICATION_JSON_VALUE,

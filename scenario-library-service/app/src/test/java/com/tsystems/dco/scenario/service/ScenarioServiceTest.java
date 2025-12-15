@@ -31,6 +31,7 @@ import com.tsystems.dco.model.FileData;
 import com.tsystems.dco.model.Scenario;
 import com.tsystems.dco.model.ScenarioPage;
 import com.tsystems.dco.scenario.entity.ScenarioEntity;
+import com.tsystems.dco.scenario.publisher.EventPublisher;
 import com.tsystems.dco.scenario.repository.ScenarioRepository;
 import com.tsystems.dco.simulation.entity.SimulationEntity;
 import com.tsystems.dco.simulation.repository.SimulationRepository;
@@ -68,6 +69,8 @@ class ScenarioServiceTest {
   private FileStorageService fileStorageService;
   @MockBean
   private SimulationRepository simulationRepository;
+  @MockBean
+  private EventPublisher eventPublisher;
   @MockBean
   private Page<ScenarioEntity> scenarioEntityPage;
   @MockBean
@@ -135,6 +138,7 @@ class ScenarioServiceTest {
     FileEntity fileEntity = FileEntity.builder().fileKey(TEST).build();
     ScenarioEntity scenarioEntity = ScenarioEntity.builder().id(uuid).name(TEST).file(fileEntity).createdBy(TEST).type(TEST).build();
     given(scenarioRepository.findById(any())).willReturn(Optional.of(scenarioEntity));
+    given(scenarioRepository.save(any())).willAnswer(invocation -> invocation.getArgument(0));
     doNothing().when(fileStorageService).deleteFile(any());
     given(fileStorageService.uploadFile(any(), any(), any())).willReturn(FileData.builder().build());
     MultipartFile file = new MockMultipartFile(TEST, TEST.getBytes());

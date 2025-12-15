@@ -118,6 +118,7 @@ class SimulationServiceTest {
     SimulationEntity simulation = SimulationEntity.builder().id(uuid).name(TEST).description(TEST)
       .createdBy(TEST)
       .environment(TEST)
+      .tracks(Arrays.asList(uuid))
       .scenarios(Arrays.asList(UUID.randomUUID(), uuid))
       .hardware(TEST).build();
     List<SimulationEntity> simulationEntities = new ArrayList<>();
@@ -140,7 +141,7 @@ class SimulationServiceTest {
     given(trackResponseEntity.getBody()).willReturn(tracks);
     given(trackRepositoryApiClient.findTrackByIds(any())).willReturn(trackResponseEntity);
     Campaign campaign = Campaign.builder().status(TEST).id(uuid).build();
-    given(campaignService.checkStatus(any())).willReturn(campaign);
+    given(campaignService.checkStatus(any(), any(), any())).willReturn(campaign);
     simulationService.simulationReadByQuery(null, TEST, 0, 10, null);
   }
 
