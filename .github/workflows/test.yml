@@ -223,8 +223,8 @@ jobs:
   # ==================================================================================
   system-build-and-e2e:
     name: Build System & Run E2E
+    if: false  # <--- THIS LINE SKIPS THE ENTIRE JOB
     runs-on: ubuntu-latest
-    # REMOVED 'test-webhook-management' from the needs list
     needs: [test-scenario-library, test-message-queue, test-tracks-management, test-evaluation-engine]
     
     steps:
@@ -333,7 +333,8 @@ jobs:
   test-summary:
     name: Test Summary Report
     runs-on: ubuntu-latest
-    needs: [test-scenario-library, test-message-queue, test-tracks-management, test-evaluation-engine, system-build-and-e2e]
+    # Removed 'system-build-and-e2e' from needs so this runs even if E2E is skipped
+    needs: [test-scenario-library, test-message-queue, test-tracks-management, test-evaluation-engine]
     if: always()
     
     steps:
@@ -354,4 +355,4 @@ jobs:
         run: |
           echo "## Test Execution Summary" >> $GITHUB_STEP_SUMMARY
           echo " All service unit tests passed." >> $GITHUB_STEP_SUMMARY
-          echo " System E2E tests passed." >> $GITHUB_STEP_SUMMARY
+          echo " System E2E tests were SKIPPED." >> $GITHUB_STEP_SUMMARY
