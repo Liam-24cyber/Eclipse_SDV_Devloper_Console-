@@ -22,10 +22,11 @@ public class SecurityConfig {
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
     return http
-      .cors(ServerHttpSecurity.CorsSpec::disable)
+      .cors(cors -> {}) // Enable CORS with configuration from WebConfig
       .csrf(ServerHttpSecurity.CsrfSpec::disable)
       .authorizeExchange(exchanges -> exchanges
         .pathMatchers("/actuator/**", "/actuator/health/**", "/actuator/prometheus/**").permitAll()
+        .pathMatchers("/graphql/**", "/graphql").permitAll() // Allow GraphQL endpoint without authentication
         .anyExchange().authenticated()
       )
       .httpBasic(httpBasic -> {})

@@ -1,74 +1,124 @@
-import { Link } from "../libs/apollo"
-import { GET_SCENARIO } from "./queries"
+export type Role = 'developer' | 'team-lead' | 'manager';
 
-export const onSubmit = async (userName: any, pass: any, setUser: Function, router: any) => {
-    try {
-        let username = userName.current
-        let password = pass.current
-        console.log('Login attempt with:', { username, passwordLength: password?.length });
-        
-        if (!username || !password) {
-            console.error('Missing username or password');
-            router.replace('/error');
-            return;
-        }
-        
-        var decodedStringBtoA = `${username}:${password}`
-        var encodedStringBtoA = btoa(decodedStringBtoA) 
-        console.log('Base64 encoded credentials:', encodedStringBtoA);
-        
-        localStorage.setItem('token', encodedStringBtoA);
-        localStorage.setItem('user', userName.current);
-        
-        const token = localStorage.getItem('token');
-        const url = 'http://localhost:8080/graphql';
-        console.log('Making request to:', url);
-        console.log('Authorization header:', `Basic ${token}`);
-        
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json',
-                'Authorization': token ? `Basic ${token}` : "",
-            },
-            body: JSON.stringify({
-                query: GET_SCENARIO,
-                variables: {
-                    scenarioPattern: '',
-                    page: 0,
-                    size: 10,
-                },
-            }),
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-        
-        if (!response.ok) {
-            console.error('HTTP error:', response.status, response.statusText);
-            router.replace('/error');
-            localStorage.removeItem('token');
-            setUser(false);
-            return;
-        }
-        
-        const result = await response.json();
-        console.log('Response data:', result);
-        
-        if (result.errors) {
-            console.error('GraphQL errors:', result.errors);
-            router.replace('/error');
-            localStorage.removeItem('token');
-            setUser(false);
-            return;
-        }
-        
-        return result;
-    } catch (error) {
-        console.error('Login error:', error);
-        router.replace('/error');
-        localStorage.removeItem('token');
-        setUser(false);
-        throw error;
+type StoredUser = {
+    username: string;
+    password: string;
+    role: Role;
+};
+
+type AuthResult = {
+    success: boolean;
+    message?: string;
+    username?: string;
+    role?: Role;
+    token?: string;
+};
+
+const USER_STORE_KEY = 'sdv-dev-users';
+const DEFAULT_USERS: StoredUser[] = [{ username: 'developer', password: 'password', role: 'developer' }];
+const ROLE_KEY = 'role';
+
+const saveUsers = (users: StoredUser[]) => {
+    localStorage.setItem(USER_STORE_KEY, JSON.stringify(users));
+};
+
+const ensureDefaultUsers = (): StoredUser[] => {
+    const rawUsers = localStorage.getItem(USER_STORE_KEY);
+    if (!rawUsers) {
+        saveUsers(DEFAULT_USERS);
+        return DEFAULT_USERS;
     }
-}
+
+    try {
+        const parsed: StoredUser[] = JSON.parse(rawUsers);
+        if (!Array.isArray(parsed)) {
+            saveUsers(DEFAULT_USERS);
+            return DEFAULT_USERS;
+        }
+
+        const normalized = parsed.map((user) => ({
+            ...user,
+            role: (user.role as Role) || 'developer',
+        }));
+
+        const hasDefaultUser = normalized.some(
+            (user) => user.username.toLowerCase() === DEFAULT_USERS[0].username.toLowerCase()
+        );
+
+        if (!hasDefaultUser) {
+            const updated = [DEFAULT_USERS[0], ...normalized];
+            saveUsers(updated);
+            return updated;
+        }
+
+        saveUsers(normalized);
+        return normalized;
+    } catch (error) {
+        console.warn('Unable to parse stored users, resetting to defaults', error);
+        saveUsers(DEFAULT_USERS);
+        return DEFAULT_USERS;
+    }
+};
+
+const persistSession = (username: string, password: string, role: Role) => {
+    const token = btoa(`${username}:${password}`);
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', username);
+    localStorage.setItem(ROLE_KEY, role);
+    return token;
+};
+
+export const loginUser = (usernameInput: string, passwordInput: string): AuthResult => {
+    const username = usernameInput?.trim();
+    const password = passwordInput;
+
+    if (!username || !password) {
+        return { success: false, message: 'Username and password are required.' };
+    }
+
+    const users = ensureDefaultUsers();
+    const match = users.find((user) => user.username.toLowerCase() === username.toLowerCase());
+
+    if (!match || match.password !== password) {
+        return { success: false, message: 'Invalid username or password.' };
+    }
+
+    const token = persistSession(match.username, match.password, match.role || 'developer');
+    return { success: true, username: match.username, token, role: match.role || 'developer' };
+};
+
+export const signupUser = (usernameInput: string, passwordInput: string, roleInput: Role): AuthResult => {
+    const username = usernameInput?.trim();
+    const password = passwordInput;
+    const role = roleInput || 'developer';
+
+    if (!username || !password) {
+        return { success: false, message: 'Pick a username and password to continue.' };
+    }
+
+    const users = ensureDefaultUsers();
+    const exists = users.some((user) => user.username.toLowerCase() === username.toLowerCase());
+    if (exists) {
+        return { success: false, message: 'That username already exists.' };
+    }
+
+    const nextUsers = [...users, { username, password, role }];
+    saveUsers(nextUsers);
+
+    const token = persistSession(username, password, role);
+    return { success: true, username, token, role, message: 'Account created. You are now logged in.' };
+};
+
+export const logoutUser = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem(ROLE_KEY);
+};
+
+export const getStoredUsers = () => ensureDefaultUsers();
+
+export const roles: { value: Role; label: string }[] = [
+    { value: 'developer', label: 'Developer' },
+    { value: 'team-lead', label: 'Team Lead' },
+    { value: 'manager', label: 'Manager' },
+];

@@ -1,0 +1,401 @@
+openapi: 3.0.3
+info:
+  title: Evaluation Service API
+  description: API for automated simulation evaluation in SDV Developer Console
+  version: 1.0.0
+  contact:
+    name: T-Systems
+    email: info@t-systems.com
+
+servers:
+  - url: http://localhost:8085
+    description: Local development server
+
+tags:
+  - name: Evaluations
+    description: Simulation evaluation operations
+  - name: Rules
+    description: Evaluation rule management
+
+paths:
+  /api/v1/evaluations/{simulationId}:
+    get:
+      tags:
+        - Evaluations
+      summary: Get evaluation result for a simulation
+      operationId: getEvaluationResult
+      parameters:
+        - name: simulationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the simulation
+      responses:
+        '200':
+          description: Evaluation result found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResult'
+        '404':
+          description: Evaluation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/evaluations/trigger:
+    post:
+      tags:
+        - Evaluations
+      summary: Manually trigger evaluation for a simulation
+      operationId: triggerEvaluation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluationTriggerRequest'
+      responses:
+        '202':
+          description: Evaluation triggered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationResult'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/rules:
+    get:
+      tags:
+        - Rules
+      summary: Get all evaluation rules
+      operationId: getAllRules
+      parameters:
+        - name: activeOnly
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Return only active rules
+      responses:
+        '200':
+          description: List of evaluation rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EvaluationRule'
+
+    post:
+      tags:
+        - Rules
+      summary: Create a new evaluation rule
+      operationId: createRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRuleRequest'
+      responses:
+        '201':
+          description: Rule created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationRule'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/rules/{ruleId}:
+    get:
+      tags:
+        - Rules
+      summary: Get a specific evaluation rule
+      operationId: getRuleById
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Rule found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationRule'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      tags:
+        - Rules
+      summary: Update an evaluation rule
+      operationId: updateRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRuleRequest'
+      responses:
+        '200':
+          description: Rule updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluationRule'
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      tags:
+        - Rules
+      summary: Delete (deactivate) an evaluation rule
+      operationId: deleteRule
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Rule deleted successfully
+        '404':
+          description: Rule not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    EvaluationResult:
+      type: object
+      required:
+        - evaluationId
+        - simulationId
+        - score
+        - verdict
+        - evaluatedAt
+      properties:
+        evaluationId:
+          type: string
+          format: uuid
+          description: Unique identifier for this evaluation
+        simulationId:
+          type: string
+          format: uuid
+          description: ID of the evaluated simulation
+        score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Overall score (0-100)
+        verdict:
+          type: string
+          enum: [PASS, FAIL, WARNING, PENDING]
+          description: Overall evaluation verdict
+        evaluatedAt:
+          type: string
+          format: date-time
+          description: When the evaluation was performed
+        evaluationDurationMs:
+          type: integer
+          description: How long the evaluation took in milliseconds
+        metricResults:
+          type: array
+          items:
+            $ref: '#/components/schemas/MetricResult'
+          description: Detailed results for each evaluated metric
+
+    MetricResult:
+      type: object
+      required:
+        - ruleName
+        - metricName
+        - passed
+      properties:
+        ruleName:
+          type: string
+          description: Name of the rule that was evaluated
+        metricName:
+          type: string
+          description: Name of the metric that was checked
+        expectedValue:
+          type: number
+          format: double
+          description: Expected threshold value
+        actualValue:
+          type: number
+          format: double
+          description: Actual value from the simulation
+        operator:
+          type: string
+          description: Comparison operator used (<, >, =, etc.)
+        passed:
+          type: boolean
+          description: Whether this metric passed the rule
+        weight:
+          type: integer
+          description: Weight of this rule in the overall score
+
+    EvaluationRule:
+      type: object
+      required:
+        - ruleId
+        - ruleName
+        - metricName
+        - operator
+        - threshold
+        - weight
+        - isActive
+      properties:
+        ruleId:
+          type: string
+          format: uuid
+          description: Unique identifier for this rule
+        ruleName:
+          type: string
+          description: Human-readable name for the rule
+        metricName:
+          type: string
+          description: Prometheus metric name to evaluate
+        operator:
+          type: string
+          enum: ['<', '>', '=', '<=', '>=', '!=']
+          description: Comparison operator
+        threshold:
+          type: number
+          format: double
+          description: Threshold value to compare against
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+          description: Weight of this rule (1-100)
+        isActive:
+          type: boolean
+          description: Whether this rule is currently active
+        description:
+          type: string
+          description: Optional description of what this rule checks
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateRuleRequest:
+      type: object
+      required:
+        - ruleName
+        - metricName
+        - operator
+        - threshold
+        - weight
+      properties:
+        ruleName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        metricName:
+          type: string
+          minLength: 1
+        operator:
+          type: string
+          enum: ['<', '>', '=', '<=', '>=', '!=']
+        threshold:
+          type: number
+          format: double
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+        description:
+          type: string
+          maxLength: 500
+
+    UpdateRuleRequest:
+      type: object
+      properties:
+        ruleName:
+          type: string
+          minLength: 1
+          maxLength: 100
+        operator:
+          type: string
+          enum: ['<', '>', '=', '<=', '>=', '!=']
+        threshold:
+          type: number
+          format: double
+        weight:
+          type: integer
+          minimum: 1
+          maximum: 100
+        isActive:
+          type: boolean
+        description:
+          type: string
+          maxLength: 500
+
+    EvaluationTriggerRequest:
+      type: object
+      required:
+        - simulationId
+      properties:
+        simulationId:
+          type: string
+          format: uuid
+          description: ID of the simulation to evaluate
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error code or type
+        message:
+          type: string
+          description: Human-readable error message
+        timestamp:
+          type: string
+          format: date-time

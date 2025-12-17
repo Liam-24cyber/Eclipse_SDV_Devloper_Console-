@@ -1,0 +1,67 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: evaluation-service
+  
+  datasource:
+    url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:dco_db}
+    username: ${DATABASE_USER:dco_user}
+    password: ${DATABASE_PASSWORD:dco_password}
+    driver-class-name: org.postgresql.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+  
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: public
+
+# Prometheus configuration
+prometheus:
+  url: ${PROMETHEUS_URL:http://localhost:9090}
+
+# Evaluation configuration
+evaluation:
+  metrics-delay-seconds: 0  # No delay needed when reading from PostgreSQL
+
+# Management and Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+      service: evaluation
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.sdv.evaluation: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

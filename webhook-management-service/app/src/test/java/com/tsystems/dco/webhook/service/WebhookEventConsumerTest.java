@@ -22,72 +22,57 @@ public class WebhookEventConsumerTest {
     @Mock
     private WebhookDeliveryService webhookDeliveryService;
 
-    @Mock
-    private ObjectMapper objectMapper;
-
     @InjectMocks
     private WebhookEventConsumer webhookEventConsumer;
 
     // --- TEST 1: Successful Scenario Event Processing ---
     @Test
-    void handleScenarioEvent_validJson_shouldCallDeliveryService() throws JsonProcessingException {
+    void handleScenarioEvent_validEvent_shouldCallDeliveryService() {
         // Arrange
-        String validJson = "{\"eventId\":\"123\", \"eventType\":\"SCENARIO_CREATED\", \"data\":\"someValue\"}";
-        
-        // Prepare the parsed map that ObjectMapper will return
-        Map<String, Object> parsedMap = new HashMap<>();
-        parsedMap.put("eventId", "123");
-        parsedMap.put("eventType", "SCENARIO_CREATED");
-        parsedMap.put("data", "someValue");
-
-        // Mock ObjectMapper behavior
-        when(objectMapper.readValue(eq(validJson), eq(Map.class))).thenReturn(parsedMap);
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("eventId", "123");
+        eventData.put("eventType", "SCENARIO_CREATED");
+        eventData.put("data", "someValue");
 
         // Act
-        webhookEventConsumer.handleScenarioEvent(validJson);
+        webhookEventConsumer.handleScenarioEvent(eventData);
 
         // Assert
         // Verify that the delivery service was called with the correct extracted values
         verify(webhookDeliveryService, times(1)).deliverEventToWebhooks(
             eq("123"), 
             eq("SCENARIO_CREATED"), 
-            eq(parsedMap)
+            eq(eventData)
         );
     }
 
     // --- TEST 2: Missing Fields (Validation Logic) ---
     @Test
-    void handleScenarioEvent_missingEventId_shouldNotCallDeliveryService() throws JsonProcessingException {
+    void handleScenarioEvent_missingEventId_shouldNotCallDeliveryService() {
         // Arrange
-        String incompleteJson = "{\"eventType\":\"SCENARIO_CREATED\"}"; // Missing eventId
-        
-        Map<String, Object> parsedMap = new HashMap<>();
-        parsedMap.put("eventType", "SCENARIO_CREATED");
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("eventType", "SCENARIO_CREATED");
         // eventId is null/missing
 
-        when(objectMapper.readValue(eq(incompleteJson), eq(Map.class))).thenReturn(parsedMap);
-
         // Act
-        webhookEventConsumer.handleScenarioEvent(incompleteJson);
+        webhookEventConsumer.handleScenarioEvent(eventData);
 
         // Assert
         // The delivery service should NEVER be called because validation failed
         verify(webhookDeliveryService, times(0)).deliverEventToWebhooks(anyString(), anyString(), any());
     }
 
-    // --- TEST 3: JSON Parsing Error (Exception Handling) ---
+    // --- TEST 3: Exception Handling ---
     @Test
-    void handleScenarioEvent_invalidJson_shouldCatchExceptionAndLog() throws JsonProcessingException {
+    void handleScenarioEvent_nullEventType_shouldCatchExceptionAndLog() {
         // Arrange
-        String garbageJson = "{ broken_json: ";
-
-        // Mock ObjectMapper to throw an exception when parsing fails
-        when(objectMapper.readValue(eq(garbageJson), eq(Map.class)))
-            .thenThrow(new JsonProcessingException("Parse error") {});
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("eventId", "123");
+        // eventType is null
 
         // Act
         // We execute the method. It should NOT throw an exception out (it catches it internally).
-        webhookEventConsumer.handleScenarioEvent(garbageJson);
+        webhookEventConsumer.handleScenarioEvent(eventData);
 
         // Assert
         // Verify delivery service was NOT called
@@ -96,24 +81,20 @@ public class WebhookEventConsumerTest {
 
     // --- TEST 4: Track Event (Verifying another listener method) ---
     @Test
-    void handleTrackEvent_validJson_shouldCallDeliveryService() throws JsonProcessingException {
+    void handleTrackEvent_validEvent_shouldCallDeliveryService() {
         // Arrange
-        String validJson = "{\"eventId\":\"456\", \"eventType\":\"TRACK_UPDATED\"}";
-        
-        Map<String, Object> parsedMap = new HashMap<>();
-        parsedMap.put("eventId", "456");
-        parsedMap.put("eventType", "TRACK_UPDATED");
-
-        when(objectMapper.readValue(eq(validJson), eq(Map.class))).thenReturn(parsedMap);
+        Map<String, Object> eventData = new HashMap<>();
+        eventData.put("eventId", "456");
+        eventData.put("eventType", "TRACK_UPDATED");
 
         // Act
-        webhookEventConsumer.handleTrackEvent(validJson);
+        webhookEventConsumer.handleTrackEvent(eventData);
 
         // Assert
         verify(webhookDeliveryService, times(1)).deliverEventToWebhooks(
             eq("456"), 
             eq("TRACK_UPDATED"), 
-            eq(parsedMap)
+            eq(eventData)
         );
     }
 }

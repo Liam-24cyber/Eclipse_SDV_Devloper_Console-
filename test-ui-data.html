@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDV UI Data Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 SDV Developer Console - UI Data Test</h1>
+    
+    <div class="container">
+        <h2>Test GraphQL Connections</h2>
+        <button onclick="testScenarios()">Test Scenarios API</button>
+        <button onclick="testTracks()">Test Tracks API</button>
+        <button onclick="testBoth()">Test Both</button>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <div class="container">
+        <h2>📊 Scenario List</h2>
+        <div id="scenarios"></div>
+    </div>
+
+    <div class="container">
+        <h2>🏁 Track List</h2>
+        <div id="tracks"></div>
+    </div>
+
+    <script>
+        const GATEWAY_URL = 'http://localhost:8080/graphql';
+        const AUTH_TOKEN = 'Basic ZGV2ZWxvcGVyOnBhc3N3b3Jk'; // developer:password
+
+        function log(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'error' ? 'error' : type === 'success' ? 'success' : '';
+            resultDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            if (className) {
+                resultDiv.className = `result ${className}`;
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('result').className = 'result';
+        }
+
+        async function testScenarios() {
+            clearResults();
+            log('🔍 Testing Scenarios GraphQL API...');
+            log(`📍 Endpoint: ${GATEWAY_URL}`);
+            
+            const query = {
+                query: `{
+                    searchScenarioByPattern(scenarioPattern: "", page: 0, size: 10) {
+                        total
+                        content {
+                            id
+                            name
+                            type
+                            description
+                            status
+                        }
+                    }
+                }`
+            };
+
+            try {
+                log('📤 Sending GraphQL request...');
+                const response = await fetch(GATEWAY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': AUTH_TOKEN
+                    },
+                    body: JSON.stringify(query)
+                });
+
+                log(`📥 Response status: ${response.status} ${response.statusText}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.errors) {
+                    log(`❌ GraphQL Errors: ${JSON.stringify(data.errors, null, 2)}`, 'error');
+                    return;
+                }
+
+                const scenarios = data.data.searchScenarioByPattern;
+                log(`✅ SUCCESS! Found ${scenarios.total} scenarios`, 'success');
+                log(`\nSample data:\n${JSON.stringify(scenarios.content.slice(0, 3), null, 2)}`);
+
+                // Display in table
+                displayScenarios(scenarios.content);
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                log(`\nFull error: ${error.stack}`);
+            }
+        }
+
+        async function testTracks() {
+            clearResults();
+            log('🔍 Testing Tracks GraphQL API...');
+            log(`📍 Endpoint: ${GATEWAY_URL}`);
+            
+            const query = {
+                query: `{
+                    searchTrackByPattern(trackPattern: "", page: 0, size: 10) {
+                        total
+                        content {
+                            id
+                            name
+                            trackType
+                            state
+                        }
+                    }
+                }`
+            };
+
+            try {
+                log('📤 Sending GraphQL request...');
+                const response = await fetch(GATEWAY_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': AUTH_TOKEN
+                    },
+                    body: JSON.stringify(query)
+                });
+
+                log(`📥 Response status: ${response.status} ${response.statusText}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.errors) {
+                    log(`❌ GraphQL Errors: ${JSON.stringify(data.errors, null, 2)}`, 'error');
+                    return;
+                }
+
+                const tracks = data.data.searchTrackByPattern;
+                log(`✅ SUCCESS! Found ${tracks.total} tracks`, 'success');
+                log(`\nSample data:\n${JSON.stringify(tracks.content.slice(0, 3), null, 2)}`);
+
+                // Display in table
+                displayTracks(tracks.content);
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`, 'error');
+                log(`\nFull error: ${error.stack}`);
+            }
+        }
+
+        async function testBoth() {
+            await testScenarios();
+            setTimeout(() => testTracks(), 1000);
+        }
+
+        function displayScenarios(scenarios) {
+            const container = document.getElementById('scenarios');
+            if (!scenarios || scenarios.length === 0) {
+                container.innerHTML = '<p>No scenarios found</p>';
+                return;
+            }
+
+            let html = `<p><strong>Total: ${scenarios.length} scenarios displayed</strong></p>`;
+            html += '<table><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Status</th><th>Description</th></tr></thead><tbody>';
+            
+            scenarios.forEach(s => {
+                html += `<tr>
+                    <td>${s.id.substring(0, 8)}...</td>
+                    <td>${s.name}</td>
+                    <td>${s.type}</td>
+                    <td>${s.status}</td>
+                    <td>${s.description ? s.description.substring(0, 50) + '...' : 'N/A'}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function displayTracks(tracks) {
+            const container = document.getElementById('tracks');
+            if (!tracks || tracks.length === 0) {
+                container.innerHTML = '<p>No tracks found</p>';
+                return;
+            }
+
+            let html = `<p><strong>Total: ${tracks.length} tracks displayed</strong></p>`;
+            html += '<table><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>State</th></tr></thead><tbody>';
+            
+            tracks.forEach(t => {
+                html += `<tr>
+                    <td>${t.id.substring(0, 8)}...</td>
+                    <td>${t.name}</td>
+                    <td>${t.trackType}</td>
+                    <td>${t.state}</td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        // Auto-test on load
+        window.onload = () => {
+            log('🚀 Page loaded. Click buttons above to test GraphQL APIs.');
+            log(`\n📌 Authentication: Using Basic Auth (developer:password)`);
+            log(`📌 Gateway URL: ${GATEWAY_URL}`);
+        };
+    </script>
+</body>
+</html>

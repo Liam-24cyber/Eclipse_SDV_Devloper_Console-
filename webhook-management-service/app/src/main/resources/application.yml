@@ -52,7 +52,9 @@ management:
 logging:
   level:
     com.tsystems.dco.webhook: DEBUG
-    org.springframework.amqp: INFO
+    org.springframework.amqp: DEBUG
+    org.springframework.amqp.rabbit: DEBUG
+    org.springframework.amqp.rabbit.listener: DEBUG
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
 

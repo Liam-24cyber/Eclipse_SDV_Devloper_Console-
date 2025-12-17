@@ -67,6 +67,8 @@ public class RabbitMQConfig {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
         factory.setMessageConverter(messageConverter);
+        factory.setAutoStartup(true);  // Ensure listeners start automatically
+        System.out.println("=== RabbitMQ Listener Container Factory configured and will auto-start ===");
         return factory;
     }
 }
