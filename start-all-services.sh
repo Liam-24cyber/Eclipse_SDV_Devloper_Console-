@@ -9,7 +9,15 @@ echo "========================================="
 echo ""
 
 # Color codes for output
-GREEN='\033[0;32m'
+GREEN='\echo ""
+echo "📚 Database Status:"
+FINAL_SCENARIO_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM scenario;" 2>/dev/null | xargs || echo "0")
+FINAL_TRACK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM track;" 2>/dev/null | xargs || echo "0")
+FINAL_WEBHOOK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM webhooks;" 2>/dev/null | xargs || echo "0")
+echo "   📊 Scenarios: $FINAL_SCENARIO_COUNT"
+echo "   🛣️  Tracks: $FINAL_TRACK_COUNT"
+echo "   🪝 Webhooks: $FINAL_WEBHOOK_COUNT"
+echo ""2m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
@@ -244,9 +252,9 @@ if docker exec postgres psql -U postgres -d postgres -c "SELECT COUNT(*) FROM sc
         echo ""
         
         # Run seed script
-        if [ -f "./seed-database.sh" ]; then
-            chmod +x ./seed-database.sh
-            ./seed-database.sh
+        if [ -f "./scripts/database/seed-database.sh" ]; then
+            chmod +x ./scripts/database/seed-database.sh
+            ./scripts/database/seed-database.sh
             
             # Verify seeding was successful
             NEW_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM scenario;" | xargs)
@@ -256,7 +264,7 @@ if docker exec postgres psql -U postgres -d postgres -c "SELECT COUNT(*) FROM sc
                 print_error "Database seeding failed"
             fi
         else
-            print_error "Seed script not found at ./seed-database.sh"
+            print_error "Seed script not found at ./scripts/database/seed-database.sh"
         fi
     else
         print_status "Database has $SCENARIO_COUNT scenarios (already populated)"
@@ -265,26 +273,101 @@ else
     print_warning "Could not verify database (may still be initializing)"
 fi
 
+# Step 14: Check and seed webhooks if empty
+echo ""
+echo "📋 Step 12: Checking webhooks..."
+if docker exec postgres psql -U postgres -d postgres -c "SELECT COUNT(*) FROM webhooks;" > /dev/null 2>&1; then
+    WEBHOOK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM webhooks;" | xargs)
+    
+    if [ "$WEBHOOK_COUNT" -eq "0" ]; then
+        print_warning "No webhooks configured - seeding default webhook..."
+        echo ""
+        
+        # Insert default webhook directly
+        docker exec -i postgres psql -U postgres <<'WEBHOOKSQL'
+INSERT INTO webhooks (id, name, description, url, is_active) 
+VALUES ('12345678-1234-1234-1234-123456789012'::uuid, 'E2E Test Webhook', 'Default webhook for E2E testing', 'https://webhook.site/475629c1-a5f1-40f5-a10a-9b18d18a8ea4', true) 
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO webhook_event_types (webhook_id, event_type) VALUES
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'simulation.started'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'simulation.completed'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'simulation.failed'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'simulation.created'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'scenario.created'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'track.selected'),
+    ('12345678-1234-1234-1234-123456789012'::uuid, 'track.created')
+ON CONFLICT DO NOTHING;
+WEBHOOKSQL
+        
+        # Verify webhook was created
+        NEW_WEBHOOK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM webhooks;" 2>/dev/null | xargs || echo "0")
+        if [ "$NEW_WEBHOOK_COUNT" -gt "0" ]; then
+            print_status "Default webhook configured successfully!"
+        else
+            print_warning "Webhook configuration may have failed"
+        fi
+    else
+        print_status "Webhooks configured ($WEBHOOK_COUNT active)"
+    fi
+else
+    print_warning "Could not verify webhooks (may still be initializing)"
+fi
+
 echo ""
 echo "========================================="
 echo -e "${GREEN}✅ Startup Complete!${NC}"
 echo ""
+
+# Step 15: Run E2E Demo with Evaluation
+echo "========================================="
+echo -e "${GREEN}🎬 Running E2E Demo with Evaluation...${NC}"
+echo "========================================="
+echo ""
+echo "This will:"
+echo "   1. Create a test scenario"
+echo "   2. Create a simulation"
+echo "   3. Publish events to RabbitMQ"
+echo "   4. Deliver webhooks"
+echo "   5. ⭐ Automatically trigger evaluation"
+echo "   6. Display evaluation results"
+echo ""
+sleep 3
+
+if [ -f "./run-e2e-demo.sh" ]; then
+    chmod +x ./run-e2e-demo.sh
+    ./run-e2e-demo.sh
+    
+    echo ""
+    echo "========================================="
+    echo -e "${GREEN}✅ E2E Demo Complete!${NC}"
+    echo "========================================="
+else
+    print_error "E2E demo script not found at ./run-e2e-demo.sh"
+    echo ""
+    echo "💡 You can manually run the E2E demo later with:"
+    echo "   ./run-e2e-demo.sh"
+fi
+
+echo ""
 echo "💡 Next Steps:"
 echo "   1. Visit http://localhost:3000 to access the UI"
-echo "   2. Test webhook delivery: ./publish-test-event.sh"
-echo "   3. View logs: docker-compose logs -f [service-name]"
-echo "   4. Monitor RabbitMQ: http://localhost:15672"
+echo "   2. Login with any role (developer, team-lead, manager)"
+echo "   3. View evaluation reports at http://localhost:3000/dco/reports"
+echo "   4. Create custom rules at http://localhost:3000/dco/evaluationRules"
+echo "   5. Monitor RabbitMQ: http://localhost:15672"
 echo ""
-echo "� Database Status:"
+echo "📚 Database Status:"
 FINAL_SCENARIO_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM scenario;" 2>/dev/null | xargs || echo "0")
 FINAL_TRACK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM track;" 2>/dev/null | xargs || echo "0")
+FINAL_WEBHOOK_COUNT=$(docker exec postgres psql -U postgres -d postgres -t -c "SELECT COUNT(*) FROM webhooks;" 2>/dev/null | xargs || echo "0")
 echo "   📊 Scenarios: $FINAL_SCENARIO_COUNT"
 echo "   🛣️  Tracks: $FINAL_TRACK_COUNT"
+echo "   🪝 Webhooks: $FINAL_WEBHOOK_COUNT"
 echo ""
-echo "�📚 Documentation:"
-echo "   - E2E_FLOW_VERIFICATION.md - Complete flow verification"
-echo "   - WEBHOOK_FIX_SUCCESS.md - Latest fixes applied"
-echo "   - LOCAL_ENDPOINTS.md - All service endpoints"
+echo "📚 Documentation:"
+echo "   - README.md - Main project documentation"
+echo "   - LICENSE.md - Project license"
 echo ""
 echo "🛑 To stop all services: docker-compose down"
 echo "🔄 To restart a service: docker-compose restart [service-name]"
