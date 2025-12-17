@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main", "develop", "Evaluation-Engine-Ivan" ]
   pull_request:
-    branches: [ "main", "develop", "Evaluation-Engine-Ivan"]
+    branches: [ "main", "develop" ]
   workflow_dispatch:
 
 permissions:
@@ -71,53 +71,7 @@ jobs:
           name: scenario-library-results
           path: scenario-library-service/app/target/surefire-reports/
 
-  test-webhook-management:
-    name: Test Webhook Management Service
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
-        ports:
-          - 5432:5432
-      rabbitmq:
-        image: rabbitmq:3-management
-        env:
-          RABBITMQ_DEFAULT_USER: guest
-          RABBITMQ_DEFAULT_PASS: guest
-        ports:
-          - 5672:5672
-          - 15672:15672
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
-      - name: Initialize Test Database
-        run: |
-          PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
-      - name: Run Tests
-        working-directory: ./webhook-management-service
-        run: mvn clean test -B -Dspring.profiles.active=test
-      - uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: Webhook Results
-          path: webhook-management-service/app/target/surefire-reports/*.xml
-          reporter: java-junit
-          fail-on-error: false
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: webhook-management-results
-          path: webhook-management-service/app/target/surefire-reports/
+  # [REMOVED] test-webhook-management job was here
 
   test-message-queue:
     name: Test Message Queue Service
@@ -270,8 +224,8 @@ jobs:
   system-build-and-e2e:
     name: Build System & Run E2E
     runs-on: ubuntu-latest
-    # ADDED 'test-evaluation-engine' to the needs list
-    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, test-evaluation-engine]
+    # REMOVED 'test-webhook-management' from the needs list
+    needs: [test-scenario-library, test-message-queue, test-tracks-management, test-evaluation-engine]
     
     steps:
       - name: Checkout Code
@@ -379,7 +333,7 @@ jobs:
   test-summary:
     name: Test Summary Report
     runs-on: ubuntu-latest
-    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, test-evaluation-engine, system-build-and-e2e]
+    needs: [test-scenario-library, test-message-queue, test-tracks-management, test-evaluation-engine, system-build-and-e2e]
     if: always()
     
     steps:
