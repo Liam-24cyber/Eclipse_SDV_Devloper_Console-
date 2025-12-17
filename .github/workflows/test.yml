@@ -2,9 +2,9 @@ name: SDV Developer Console CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "Evaluation-Engine-Ivan" ]
   pull_request:
-    branches: [ "main", "develop" ]
+    branches: [ "main", "develop", "Evaluation-Engine-Ivan"]
   workflow_dispatch:
 
 permissions:
@@ -56,7 +56,6 @@ jobs:
           PGPASSWORD=test psql -h localhost -U test -d testdb -f postgres/dco-init.sql || echo "Schema initialization skipped if not needed"
       - name: Run Tests
         working-directory: ./scenario-library-service
-        # This flag ensures the pipeline stays GREEN even if tests fail
         continue-on-error: true
         run: mvn clean test -B -Dspring.profiles.active=test
       - uses: dorny/test-reporter@v1
@@ -71,6 +70,7 @@ jobs:
         with:
           name: scenario-library-results
           path: scenario-library-service/app/target/surefire-reports/
+
   test-webhook-management:
     name: Test Webhook Management Service
     runs-on: ubuntu-latest
@@ -215,6 +215,54 @@ jobs:
           name: tracks-management-results
           path: tracks-management-service/app/target/surefire-reports/
 
+  # === NEW JOB: EVALUATION ENGINE TESTS ===
+  test-evaluation-engine:
+    name: Test Evaluation Engine Service
+    runs-on: ubuntu-latest
+    # Evaluation Engine might not strictly need DB/Rabbit if it's pure logic
+    # but we include them just in case future tests need them.
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: testdb
+        options: >-
+          --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+      
+      # Important: Build API first so APP can find it (same fix we did locally)
+      - name: Build Evaluation API (Install to Local Maven Repo)
+        working-directory: ./evaluation-service
+        run: mvn clean install -DskipTests
+
+      - name: Run Evaluation App Tests
+        working-directory: ./evaluation-service
+        # We explicitly run the app tests now that API is installed
+        run: mvn -pl app test -B
+
+      - uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Evaluation Engine Results
+          path: evaluation-service/app/target/surefire-reports/*.xml
+          reporter: java-junit
+          fail-on-error: false
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evaluation-engine-results
+          path: evaluation-service/app/target/surefire-reports/
+
   # ==================================================================================
   # STAGE 2: BUILD SYSTEM & RUN E2E TESTS
   # Runs only if all unit tests pass. Builds Docker containers and runs the demo script.
@@ -222,7 +270,8 @@ jobs:
   system-build-and-e2e:
     name: Build System & Run E2E
     runs-on: ubuntu-latest
-    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management]
+    # ADDED 'test-evaluation-engine' to the needs list
+    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, test-evaluation-engine]
     
     steps:
       - name: Checkout Code
@@ -265,6 +314,13 @@ jobs:
           cd tracks-management-service && mvn -N clean install
           cd api && mvn clean install -DskipTests
           cd ../app-database && mvn clean install -DskipTests
+          cd ../app && mvn clean install -DskipTests
+
+      # === ADDED EVALUATION ENGINE BUILD ===
+      - name: Build Evaluation Engine Service
+        run: |
+          cd evaluation-service && mvn -N clean install
+          cd api && mvn clean install -DskipTests
           cd ../app && mvn clean install -DskipTests
 
       - name: Build DCO Gateway
@@ -323,7 +379,7 @@ jobs:
   test-summary:
     name: Test Summary Report
     runs-on: ubuntu-latest
-    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, system-build-and-e2e]
+    needs: [test-scenario-library, test-webhook-management, test-message-queue, test-tracks-management, test-evaluation-engine, system-build-and-e2e]
     if: always()
     
     steps:
